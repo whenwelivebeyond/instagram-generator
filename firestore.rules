@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Captions are shared by anyone using this app, but Firebase Authentication
+    // is still required before the browser can access them.
+    match /captions/{captionId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

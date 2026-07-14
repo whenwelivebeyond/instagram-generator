@@ -502,6 +502,17 @@ textarea {
   color: var(--muted);
 }
 
+.storage-status {
+  min-height: 1.25em;
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.storage-status.is-error {
+  color: #b42318;
+}
+
 @media (max-width: 980px) {
   .generator-layout,
   .caption-center {

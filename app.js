@@ -1,7 +1,10 @@
+import { Storage } from "./storage.js";
+
 (() => {
   const EXPORT_WIDTH = 1080;
   const EXPORT_HEIGHT = 1920;
-  const STORAGE_KEY = "instagram_caption_center";
+  const LEGACY_STORAGE_KEY = "instagram_caption_center";
+  const LEGACY_MIGRATION_KEY = "instagram_caption_center_firestore_migrated";
   const HUSKY_BACKGROUND_CYCLE = [
     "assets/backgrounds/Yellow.jpg",
     "assets/backgrounds/Green.jpg",
@@ -69,58 +72,65 @@
     }
   };
 
-  class Emitter {
+  class CaptionStore {
     constructor() {
-      this.events = new Map();
+      this.data = this.emptyData();
+      this.listeners = [];
     }
 
-    on(event, callback) {
-      const callbacks = this.events.get(event) || [];
-      callbacks.push(callback);
-      this.events.set(event, callbacks);
+    emptyData() {
+      return { pawsitive_husky: [], corporate_donkey: [], mooing_aunty: [] };
     }
 
-    emit(event, payload) {
-      (this.events.get(event) || []).forEach((callback) => callback(payload));
-    }
-  }
-
-  class CaptionStore extends Emitter {
-    constructor(key) {
-      super();
-      this.key = key;
-      this.data = this.read();
+    onChange(callback) {
+      this.listeners.push(callback);
     }
 
-    read() {
-      const fallback = { pawsitive_husky: [], corporate_donkey: [], mooing_aunty: [] };
+    emitChange() {
+      this.listeners.forEach((callback) => callback(this.data));
+    }
+
+    async connect() {
+      this.unsubscribe = await Storage.subscribe((captions) => {
+        this.data = this.emptyData();
+        captions.forEach((caption) => {
+          if (this.data[caption.account]) this.data[caption.account].push(caption);
+        });
+        this.emitChange();
+      });
+      await this.migrateLegacyCaptions();
+    }
+
+    async migrateLegacyCaptions() {
+      if (localStorage.getItem(LEGACY_MIGRATION_KEY)) return;
       try {
-        const parsed = JSON.parse(localStorage.getItem(this.key));
-        return { ...fallback, ...parsed };
-      } catch {
-        return fallback;
+        const legacyData = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY));
+        const captions = Object.entries(legacyData || {}).flatMap(([account, entries]) =>
+          Array.isArray(entries) ? entries.map((caption) => ({ account, caption })) : []
+        );
+        await Promise.all(captions.filter((item) => item.caption?.trim()).map((item) =>
+          Storage.saveCaption(item.account, item.caption.trim())
+        ));
+      } catch (error) {
+        console.warn("Existing browser captions could not be migrated.", error);
       }
-    }
-
-    persist() {
-      localStorage.setItem(this.key, JSON.stringify(this.data));
-      this.emit("change", this.data);
+      localStorage.setItem(LEGACY_MIGRATION_KEY, "true");
     }
 
     list(accountKey) {
       return [...(this.data[accountKey] || [])];
     }
 
-    add(accountKey, caption) {
+    async add(accountKey, caption) {
       const text = caption.trim();
-      if (!text) return;
-      this.data[accountKey] = [...this.list(accountKey), text];
-      this.persist();
+      if (!text) return false;
+      await Storage.saveCaption(accountKey, text);
+      return true;
     }
 
-    remove(accountKey, index) {
-      this.data[accountKey] = this.list(accountKey).filter((_, itemIndex) => itemIndex !== index);
-      this.persist();
+    async remove(accountKey, index) {
+      const caption = this.list(accountKey)[index];
+      if (caption) await Storage.deleteCaption(caption.id);
     }
   }
 
@@ -287,7 +297,7 @@
   class App {
     constructor(assets) {
       this.assets = assets;
-      this.store = new CaptionStore(STORAGE_KEY);
+      this.store = new CaptionStore();
       this.config = GENERATORS.pawsitive;
       this.state = {
         background: this.config.defaultBackground,
@@ -323,6 +333,7 @@
         captionAccountSelect: document.querySelector("#captionAccountSelect"),
         captionCenterInput: document.querySelector("#captionCenterInput"),
         saveCaptionButton: document.querySelector("#saveCaptionButton"),
+        captionStorageStatus: document.querySelector("#captionStorageStatus"),
         captionTableBody: document.querySelector("#captionTableBody")
       };
     }
@@ -335,7 +346,7 @@
       this.bindNavigation();
       this.bindGeneratorControls();
       this.bindCaptionCenter();
-      this.store.on("change", () => {
+      this.store.onChange(() => {
         this.renderSavedCaptionOptions();
         this.renderCaptionTable();
       });
@@ -345,6 +356,14 @@
       this.renderCaptionTable();
       this.syncGeneratorControls();
       this.renderPreview();
+      this.setCaptionStorageStatus("Loading saved captions…");
+      try {
+        await this.store.connect();
+        this.setCaptionStorageStatus("Captions are synced to Firebase.");
+      } catch (error) {
+        console.error(error);
+        this.setCaptionStorageStatus("Captions could not connect to Firebase. Complete the Firebase setup steps below.", true);
+      }
     }
 
     setState(patch) {
@@ -421,14 +440,24 @@
 
     bindCaptionCenter() {
       this.dom.captionAccountSelect.addEventListener("change", () => this.renderCaptionTable());
-      this.dom.saveCaptionButton.addEventListener("click", () => {
-        this.store.add(this.dom.captionAccountSelect.value, this.dom.captionCenterInput.value);
-        this.dom.captionCenterInput.value = "";
+      this.dom.saveCaptionButton.addEventListener("click", async () => {
+        try {
+          const saved = await this.store.add(this.dom.captionAccountSelect.value, this.dom.captionCenterInput.value);
+          if (saved) this.dom.captionCenterInput.value = "";
+        } catch (error) {
+          console.error(error);
+          this.setCaptionStorageStatus("Caption could not be saved. Check your Firebase setup.", true);
+        }
       });
-      this.dom.captionTableBody.addEventListener("click", (event) => {
+      this.dom.captionTableBody.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-delete-index]");
         if (!button) return;
-        this.store.remove(this.dom.captionAccountSelect.value, Number(button.dataset.deleteIndex));
+        try {
+          await this.store.remove(this.dom.captionAccountSelect.value, Number(button.dataset.deleteIndex));
+        } catch (error) {
+          console.error(error);
+          this.setCaptionStorageStatus("Caption could not be deleted. Check your Firebase setup.", true);
+        }
       });
     }
 
@@ -500,8 +529,8 @@
       this.dom.savedCaptionSelect.innerHTML = '<option value="">Choose a saved caption</option>';
       captions.forEach((caption, index) => {
         const option = document.createElement("option");
-        option.value = caption;
-        option.textContent = `${index + 1}. ${caption.replace(/\s+/g, " ").slice(0, 70)}`;
+        option.value = caption.caption;
+        option.textContent = `${index + 1}. ${caption.caption.replace(/\s+/g, " ").slice(0, 70)}`;
         this.dom.savedCaptionSelect.append(option);
       });
     }
@@ -524,9 +553,14 @@
             </button>
           </td>
         `;
-        row.querySelector(".caption-cell").textContent = caption;
+        row.querySelector(".caption-cell").textContent = caption.caption;
         this.dom.captionTableBody.append(row);
       });
+    }
+
+    setCaptionStorageStatus(message, isError = false) {
+      this.dom.captionStorageStatus.textContent = message;
+      this.dom.captionStorageStatus.classList.toggle("is-error", isError);
     }
 
     selectBackground(path) {
