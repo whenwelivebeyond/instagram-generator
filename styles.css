@@ -210,7 +210,8 @@ button {
 
 .label-icon-button,
 .toolbar-button,
-.row-delete-button {
+.row-delete-button,
+.row-move-button {
   display: inline-grid;
   width: 32px;
   height: 32px;
@@ -221,6 +222,15 @@ button {
   color: var(--text);
   font-size: 19px;
   line-height: 1;
+}
+
+.label-icon-button img,
+.toolbar-button img,
+.row-delete-button img,
+.row-move-button img,
+.inline-caption-actions img {
+  width: 17px;
+  height: 17px;
 }
 
 select,
@@ -235,7 +245,12 @@ textarea,
 }
 
 select {
-  padding: 0 12px;
+  appearance: none;
+  padding: 0 42px 0 12px;
+  background-image: url("assets/icons/down.svg");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 14px 14px;
 }
 
 textarea {
@@ -289,7 +304,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 7px 12px;
+  padding: 7px 18px 7px 12px;
   text-align: left;
 }
 
@@ -298,6 +313,12 @@ textarea {
   width: 42px;
   height: 42px;
   object-fit: contain;
+}
+
+.image-select-button .picker-chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
 }
 
 .image-options {
@@ -360,6 +381,25 @@ textarea {
   border-radius: var(--radius);
   background: var(--surface-strong);
   color: var(--text);
+}
+
+.icon-button,
+.label-icon-button,
+.toolbar-button,
+.row-delete-button,
+.row-move-button,
+.inline-caption-actions button {
+  border-color: #252525;
+}
+
+.icon-button:hover,
+.label-icon-button:hover,
+.toolbar-button:hover,
+.row-delete-button:hover,
+.row-move-button:hover,
+.inline-caption-actions button:hover {
+  border-color: #174ea6;
+  background: var(--accent-soft);
 }
 
 .icon-button {
@@ -477,6 +517,155 @@ textarea {
   align-items: start;
 }
 
+.hashtags-page {
+  display: grid;
+  gap: 14px;
+  width: min(860px, 100%);
+  margin: 0 auto;
+}
+
+.hashtag-account {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.hashtag-account-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 54px;
+  padding: 0 18px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 800;
+  text-align: left;
+}
+
+.hashtag-account-toggle:hover {
+  background: var(--accent-soft);
+}
+
+.hashtag-account-toggle img {
+  width: 16px;
+  height: 16px;
+  margin-left: 16px;
+}
+
+.hashtag-account-content {
+  display: none;
+  gap: 16px;
+  padding: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.hashtag-account.open .hashtag-account-content {
+  display: grid;
+}
+
+.hashtag-group {
+  display: grid;
+  gap: 9px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hashtag-group:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.hashtag-group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hashtag-group-heading h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.group-edit-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  background: var(--surface);
+  color: #252525;
+  font-size: 17px;
+}
+
+.group-edit-button:hover {
+  border-color: #174ea6;
+  background: var(--accent-soft);
+}
+
+.hashtag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-height: 27px;
+}
+
+.hashtag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.hashtag-chip button {
+  display: none;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #252525;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.hashtag-chips.editing .hashtag-chip button {
+  display: inline-grid;
+  place-items: center;
+}
+
+.hashtag-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.hashtag-add-row input {
+  min-width: 0;
+  flex: 1;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.hashtag-save-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 800;
+}
+
 .caption-form {
   display: grid;
   gap: 16px;
@@ -580,10 +769,14 @@ textarea {
   display: flex;
 }
 
-.save-management {
-  color: #ffffff;
-  border-color: #111827;
-  background: #111827;
+.management-done-button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 750;
 }
 
 .caption-table th,
@@ -608,38 +801,11 @@ textarea {
   flex: 1;
 }
 
-.caption-status {
-  flex: 0 0 auto;
-  margin-top: 1px;
-  padding: 3px 6px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
-.status-used {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.status-unused {
-  background: #dcfce7;
-  color: #166534;
-}
-
 .management-active .caption-cell {
   display: flex;
   align-items: flex-start;
   gap: 9px;
   cursor: grab;
-}
-
-.move-handle {
-  color: var(--muted);
-  font-size: 19px;
-  line-height: 1.1;
 }
 
 .caption-text {
@@ -651,14 +817,8 @@ textarea {
   color: #b42318;
 }
 
-.row-delete-button img {
-  width: 17px;
-  height: 17px;
-}
-
-.caption-table tr.pending-delete {
-  opacity: 0.48;
-  text-decoration: line-through;
+.row-move-button {
+  flex: 0 0 auto;
 }
 
 .inline-caption-editor {
@@ -677,8 +837,11 @@ textarea {
 }
 
 .inline-caption-actions button {
-  min-height: 30px;
-  padding: 0 9px;
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: 5px;
   background: var(--surface);

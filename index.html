@@ -19,6 +19,7 @@
     <nav class="side-menu" id="sideMenu" aria-label="Primary navigation">
       <button class="nav-item active" type="button" data-page="generator">Content Generator</button>
       <button class="nav-item" type="button" data-page="captions">Caption Center</button>
+      <button class="nav-item" type="button" data-page="hashtags">Hashtags</button>
     </nav>
     <div class="menu-scrim" id="menuScrim"></div>
 
@@ -60,9 +61,14 @@
             <div class="control-group">
               <div class="caption-label-row">
                 <label for="captionInput">Caption</label>
-                <button class="label-icon-button" id="resetCaptionButton" type="button" aria-label="Reset caption" title="Reset caption">↺</button>
+                <button class="label-icon-button" id="resetCaptionButton" type="button" aria-label="Reset caption" title="Reset caption"><img src="assets/icons/Reset.svg" alt=""></button>
               </div>
               <textarea id="captionInput" rows="6" spellcheck="true" placeholder="enter caption here"></textarea>
+            </div>
+
+            <div class="control-group">
+              <label for="hashtagsInput">Hashtags</label>
+              <textarea id="hashtagsInput" rows="3" spellcheck="false" placeholder="#hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5"></textarea>
             </div>
 
             <div class="control-row">
@@ -103,7 +109,10 @@
               </select>
             </div>
             <div class="control-group">
-              <label for="captionCenterInput">Caption</label>
+              <div class="caption-label-row">
+                <label for="captionCenterInput">Caption</label>
+                <button class="label-icon-button" id="resetCaptionCenterButton" type="button" aria-label="Reset caption" title="Reset caption"><img src="assets/icons/Reset.svg" alt=""></button>
+              </div>
               <textarea id="captionCenterInput" rows="8" spellcheck="true"></textarea>
             </div>
             <button class="download-button" id="saveCaptionButton" type="button">Save Caption</button>
@@ -112,17 +121,20 @@
 
           <section class="caption-table-wrap" id="captionTableWrap">
             <div class="caption-table-header">
-              <h2>Saved captions</h2>
+              <div>
+                <h2>Saved captions</h2>
+                <p class="caption-list-subtitle" id="captionListSubtitle">Showing all captions</p>
+              </div>
               <div class="caption-toolbar" id="captionToolbar">
                 <div class="caption-search" id="captionSearch">
-                  <button class="toolbar-button" type="button" data-action="open-search" aria-label="Search captions" title="Search">⌕</button>
+                  <button class="toolbar-button" type="button" data-action="open-search" aria-label="Search captions" title="Search"><img src="assets/icons/Search.svg" alt=""></button>
                   <div class="search-field" id="searchField">
                     <input id="captionSearchInput" type="search" placeholder="Search captions">
                     <button class="toolbar-button" type="button" data-action="close-search" aria-label="Close search">×</button>
                   </div>
                 </div>
                 <div class="toolbar-menu">
-                  <button class="toolbar-button" type="button" data-action="toggle-filter" aria-label="Filter captions" title="Filter">⌄</button>
+                  <button class="toolbar-button" type="button" data-action="toggle-filter" aria-label="Filter captions" title="Filter"><img src="assets/icons/Filter.svg" alt=""></button>
                   <div class="toolbar-popover" id="filterMenu">
                     <button type="button" data-filter="used">Used</button>
                     <button type="button" data-filter="unused">Unused</button>
@@ -130,36 +142,29 @@
                   </div>
                 </div>
                 <div class="toolbar-menu">
-                  <button class="toolbar-button" type="button" data-action="toggle-sort" aria-label="Sort captions" title="Sort">⇅</button>
+                  <button class="toolbar-button" type="button" data-action="toggle-sort" aria-label="Sort captions" title="Sort"><img src="assets/icons/Sort.svg" alt=""></button>
                   <div class="toolbar-popover" id="sortMenu">
                     <button type="button" data-sort="default">Default</button>
                     <button type="button" data-sort="latest">Latest</button>
                     <button type="button" data-sort="earliest">Earliest</button>
                   </div>
                 </div>
-                <div class="toolbar-menu">
-                  <button class="toolbar-button" id="captionMoreButton" type="button" data-action="toggle-more" aria-label="More caption actions" title="More actions">⋮</button>
-                  <div class="toolbar-popover" id="moreMenu">
-                    <button type="button" data-action="enter-manage">Reorder list</button>
-                  </div>
-                </div>
                 <div class="management-toolbar" id="managementToolbar">
-                  <button class="toolbar-button" type="button" data-action="undo" aria-label="Undo" title="Undo">↶</button>
-                  <button class="toolbar-button" type="button" data-action="redo" aria-label="Redo" title="Redo">↷</button>
-                  <button class="toolbar-button save-management" type="button" data-action="save-management" aria-label="Save list changes" title="Save changes">✓</button>
+                  <button class="toolbar-button" type="button" data-action="undo" aria-label="Undo" title="Undo"><img src="assets/icons/Undo.svg" alt=""></button>
+                  <button class="toolbar-button" type="button" data-action="redo" aria-label="Redo" title="Redo"><img src="assets/icons/Redo.svg" alt=""></button>
+                  <button class="management-done-button" type="button" data-action="exit-management">Done</button>
                 </div>
               </div>
             </div>
             <table class="caption-table">
-              <thead>
-                <tr>
-                  <th>Caption</th>
-                </tr>
-              </thead>
               <tbody id="captionTableBody"></tbody>
             </table>
           </section>
         </div>
+      </section>
+
+      <section class="page" id="hashtagsPage" data-title="Hashtags">
+        <div class="hashtags-page" id="hashtagsPageContent"></div>
       </section>
     </main>
 

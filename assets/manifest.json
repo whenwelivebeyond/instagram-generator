@@ -37,7 +37,13 @@
     "alignLeft": "assets/icons/Left alignment.svg",
     "alignCenter": "assets/icons/Center alignment.svg",
     "alignRight": "assets/icons/Right alignment.svg",
-    "delete": "assets/icons/Delete.svg"
+    "delete": "assets/icons/Delete.svg",
+    "moveTop": "assets/icons/move to top.svg",
+    "check": "assets/icons/Check.svg",
+    "undo": "assets/icons/Undo.svg",
+    "redo": "assets/icons/Redo.svg"
+    ,"dropdownUp": "assets/icons/up.svg"
+    ,"dropdownDown": "assets/icons/down.svg"
   },
   "template": {
     "bowl": "assets/template/bowl.png",

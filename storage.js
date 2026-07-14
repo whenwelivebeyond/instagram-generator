@@ -6,10 +6,12 @@ import {
   doc,
   onSnapshot,
   serverTimestamp,
+  setDoc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const CAPTIONS_COLLECTION = "captions";
+const HASHTAGS_COLLECTION = "hashtags";
 
 export const Storage = {
   async subscribe(onChange, onError) {
@@ -58,5 +60,36 @@ export const Storage = {
 
   async deleteCaptions(ids) {
     return Promise.all(ids.map((id) => this.deleteCaption(id)));
+  },
+
+  async restoreCaption(caption) {
+    const { id, createdAtServer, updatedAtServer, ...data } = caption;
+    return setDoc(doc(db, CAPTIONS_COLLECTION, id), {
+      ...data,
+      updatedAt: Date.now(),
+      createdAtServer: serverTimestamp(),
+      updatedAtServer: serverTimestamp()
+    });
+  },
+
+  async subscribeHashtags(onChange, onError) {
+    await ensureSignedIn();
+    return onSnapshot(collection(db, HASHTAGS_COLLECTION), (snapshot) => {
+      onChange(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+    }, onError);
+  },
+
+  async saveHashtag(account, group, text) {
+    return addDoc(collection(db, HASHTAGS_COLLECTION), {
+      account,
+      group,
+      text,
+      createdAt: Date.now(),
+      createdAtServer: serverTimestamp()
+    });
+  },
+
+  async deleteHashtag(id) {
+    return deleteDoc(doc(db, HASHTAGS_COLLECTION, id));
   }
 };
