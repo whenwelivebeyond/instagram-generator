@@ -76,6 +76,7 @@ import { Storage } from "./storage.js";
     constructor() {
       this.data = this.emptyData();
       this.listeners = [];
+      this.normalizedCaptionIds = new Set();
     }
 
     emptyData() {
@@ -92,6 +93,14 @@ import { Storage } from "./storage.js";
 
     async connect() {
       this.unsubscribe = await Storage.subscribe((captions) => {
+        captions.forEach((caption) => {
+          if ((caption.status && caption.sortOrder !== undefined) || this.normalizedCaptionIds.has(caption.id)) return;
+          this.normalizedCaptionIds.add(caption.id);
+          Storage.updateCaption(caption.id, {
+            ...(caption.status ? {} : { status: "unused" }),
+            ...(caption.sortOrder === undefined ? { sortOrder: -(caption.createdAt || Date.now()) } : {})
+          }).catch((error) => console.warn("Caption metadata could not be updated.", error));
+        });
         this.data = this.emptyData();
         captions.forEach((caption) => {
           if (this.data[caption.account]) this.data[caption.account].push(caption);
@@ -121,16 +130,28 @@ import { Storage } from "./storage.js";
       return [...(this.data[accountKey] || [])];
     }
 
-    async add(accountKey, caption) {
+    async add(accountKey, caption, options) {
       const text = caption.trim();
       if (!text) return false;
-      await Storage.saveCaption(accountKey, text);
-      return true;
+      return Storage.saveCaption(accountKey, text, options);
     }
 
     async remove(accountKey, index) {
       const caption = this.list(accountKey)[index];
       if (caption) await Storage.deleteCaption(caption.id);
+    }
+
+    async update(id, patch) {
+      await Storage.updateCaption(id, patch);
+      Object.values(this.data).forEach((captions) => {
+        const caption = captions.find((item) => item.id === id);
+        if (caption) Object.assign(caption, patch, { updatedAt: Date.now() });
+      });
+      this.emitChange();
+    }
+
+    async removeMany(ids) {
+      await Storage.deleteCaptions(ids);
     }
   }
 
@@ -306,6 +327,18 @@ import { Storage } from "./storage.js";
         alignment: "center",
         textColor: "#FFFFFF",
       };
+      this.selectedSavedCaptionId = null;
+      this.captionView = {
+        filter: "all",
+        sort: "default",
+        searchOpen: false,
+        query: "",
+        management: false,
+        order: [],
+        pendingDeleteIds: new Set(),
+        history: [],
+        redo: []
+      };
       this.dom = this.getDom();
       this.renderer = new PostRenderer(this.dom.previewCanvas, assets, this.config);
     }
@@ -325,6 +358,7 @@ import { Storage } from "./storage.js";
         huskyButton: document.querySelector("#huskyPickerButton"),
         huskyOptions: document.querySelector("#huskyOptions"),
         captionInput: document.querySelector("#captionInput"),
+        resetCaptionButton: document.querySelector("#resetCaptionButton"),
         savedCaptionSelect: document.querySelector("#savedCaptionSelect"),
         alignmentButtons: document.querySelector("#alignmentButtons"),
         textColorButtons: document.querySelector("#textColorButtons"),
@@ -335,6 +369,12 @@ import { Storage } from "./storage.js";
         saveCaptionButton: document.querySelector("#saveCaptionButton"),
         captionStorageStatus: document.querySelector("#captionStorageStatus"),
         captionTableBody: document.querySelector("#captionTableBody")
+        ,captionTableWrap: document.querySelector("#captionTableWrap")
+        ,captionToolbar: document.querySelector("#captionToolbar")
+        ,captionSearchInput: document.querySelector("#captionSearchInput")
+        ,filterMenu: document.querySelector("#filterMenu")
+        ,sortMenu: document.querySelector("#sortMenu")
+        ,moreMenu: document.querySelector("#moreMenu")
       };
     }
 
@@ -386,6 +426,7 @@ import { Storage } from "./storage.js";
         alignment: "center",
         textColor: this.config.textColor || "#FFFFFF"
       };
+      this.selectedSavedCaptionId = null;
       this.renderBackgroundChoices();
       this.renderHuskyChoices();
       this.renderSavedCaptionOptions();
@@ -423,11 +464,19 @@ import { Storage } from "./storage.js";
 
     bindGeneratorControls() {
       this.dom.accountSelect.addEventListener("change", (event) => this.selectGenerator(event.target.value));
-      this.dom.captionInput.addEventListener("input", (event) => this.setState({ caption: event.target.value }));
-      this.dom.savedCaptionSelect.addEventListener("change", (event) => {
-        if (!event.target.value) return;
+      this.dom.captionInput.addEventListener("input", (event) => {
+        this.selectedSavedCaptionId = null;
+        this.dom.savedCaptionSelect.value = "";
         this.setState({ caption: event.target.value });
       });
+      this.dom.savedCaptionSelect.addEventListener("change", (event) => {
+        if (!event.target.value) return;
+        const caption = this.store.list(this.config.accountKey).find((item) => item.id === event.target.value);
+        if (!caption) return;
+        this.selectedSavedCaptionId = caption.id;
+        this.setState({ caption: caption.caption });
+      });
+      this.dom.resetCaptionButton.addEventListener("click", () => this.resetGeneratorCaption());
       this.dom.textColorButtons.addEventListener("click", (event) => {
         const button = event.target.closest("[data-color]");
         if (button) this.setState({ textColor: button.dataset.color });
@@ -442,23 +491,22 @@ import { Storage } from "./storage.js";
       this.dom.captionAccountSelect.addEventListener("change", () => this.renderCaptionTable());
       this.dom.saveCaptionButton.addEventListener("click", async () => {
         try {
-          const saved = await this.store.add(this.dom.captionAccountSelect.value, this.dom.captionCenterInput.value);
+          const saved = await this.store.add(this.dom.captionAccountSelect.value, this.dom.captionCenterInput.value, {
+            status: "unused",
+            sortOrder: this.nextCaptionSortOrder(this.dom.captionAccountSelect.value)
+          });
           if (saved) this.dom.captionCenterInput.value = "";
         } catch (error) {
           console.error(error);
           this.setCaptionStorageStatus("Caption could not be saved. Check your Firebase setup.", true);
         }
       });
-      this.dom.captionTableBody.addEventListener("click", async (event) => {
-        const button = event.target.closest("[data-delete-index]");
-        if (!button) return;
-        try {
-          await this.store.remove(this.dom.captionAccountSelect.value, Number(button.dataset.deleteIndex));
-        } catch (error) {
-          console.error(error);
-          this.setCaptionStorageStatus("Caption could not be deleted. Check your Firebase setup.", true);
-        }
+      this.dom.captionToolbar.addEventListener("click", (event) => this.handleCaptionToolbar(event));
+      this.dom.captionSearchInput.addEventListener("input", (event) => {
+        this.captionView.query = event.target.value;
+        this.renderCaptionTable();
       });
+      this.bindCaptionTableInteractions();
     }
 
     renderBackgroundChoices() {
@@ -525,37 +573,318 @@ import { Storage } from "./storage.js";
     }
 
     renderSavedCaptionOptions() {
-      const captions = this.store.list(this.config.accountKey);
+      const captions = this.store.list(this.config.accountKey).filter((caption) => caption.status !== "used");
       this.dom.savedCaptionSelect.innerHTML = '<option value="">Choose a saved caption</option>';
       captions.forEach((caption, index) => {
         const option = document.createElement("option");
-        option.value = caption.caption;
+        option.value = caption.id;
         option.textContent = `${index + 1}. ${caption.caption.replace(/\s+/g, " ").slice(0, 70)}`;
         this.dom.savedCaptionSelect.append(option);
       });
+      if (this.selectedSavedCaptionId && captions.some((caption) => caption.id === this.selectedSavedCaptionId)) {
+        this.dom.savedCaptionSelect.value = this.selectedSavedCaptionId;
+      } else {
+        this.selectedSavedCaptionId = null;
+      }
     }
 
     renderCaptionTable() {
-      const accountKey = this.dom.captionAccountSelect.value;
-      const captions = this.store.list(accountKey);
+      const captions = this.visibleCaptions();
       this.dom.captionTableBody.innerHTML = "";
       if (!captions.length) {
-        this.dom.captionTableBody.innerHTML = `<tr><td class="empty-row" colspan="2">No captions saved for ${ACCOUNT_LABELS[accountKey]}.</td></tr>`;
+        this.dom.captionTableBody.innerHTML = '<tr><td class="empty-row">No captions match this view.</td></tr>';
         return;
       }
-      captions.forEach((caption, index) => {
+      captions.forEach((caption) => {
         const row = document.createElement("tr");
-        row.innerHTML = `
-          <td class="caption-cell"></td>
-          <td>
-            <button class="delete-button" type="button" data-delete-index="${index}" aria-label="Delete caption">
-              <img src="${this.assets.manifest.icons.delete}" alt="">
-            </button>
-          </td>
-        `;
-        row.querySelector(".caption-cell").textContent = caption.caption;
+        row.dataset.captionId = caption.id;
+        row.draggable = this.captionView.management;
+        row.classList.toggle("pending-delete", this.captionView.pendingDeleteIds.has(caption.id));
+        row.innerHTML = '<td class="caption-cell"></td>';
+        const cell = row.querySelector(".caption-cell");
+        if (this.captionView.management) {
+          cell.innerHTML = `
+            <span class="move-handle" aria-hidden="true">⠿</span>
+            <span class="caption-text"></span>
+            <span class="caption-status ${caption.status === "used" ? "status-used" : "status-unused"}">${caption.status === "used" ? "Used" : "Unused"}</span>
+            <button class="row-delete-button" type="button" data-action="toggle-delete" aria-label="Mark caption for deletion"><img src="${this.assets.manifest.icons.delete}" alt=""></button>
+          `;
+          cell.querySelector(".caption-text").textContent = caption.caption;
+        } else {
+          cell.innerHTML = `<span class="caption-text"></span><span class="caption-status ${caption.status === "used" ? "status-used" : "status-unused"}">${caption.status === "used" ? "Used" : "Unused"}</span>`;
+          cell.querySelector(".caption-text").textContent = caption.caption;
+        }
         this.dom.captionTableBody.append(row);
       });
+    }
+
+    visibleCaptions() {
+      const accountKey = this.dom.captionAccountSelect.value;
+      let captions = this.store.list(accountKey);
+      if (this.captionView.management && this.captionView.order.length) {
+        const position = new Map(this.captionView.order.map((id, index) => [id, index]));
+        captions.sort((first, second) => (position.get(first.id) ?? Infinity) - (position.get(second.id) ?? Infinity));
+      } else if (this.captionView.sort === "latest") {
+        captions.sort((first, second) => this.captionTime(second) - this.captionTime(first));
+      } else if (this.captionView.sort === "earliest") {
+        captions.sort((first, second) => this.captionTime(first) - this.captionTime(second));
+      } else {
+        captions.sort((first, second) => this.captionOrder(first) - this.captionOrder(second));
+      }
+      if (this.captionView.filter !== "all") captions = captions.filter((caption) => (caption.status || "unused") === this.captionView.filter);
+      const query = this.captionView.query.trim().toLowerCase();
+      if (query) captions = captions.filter((caption) => caption.caption.toLowerCase().includes(query));
+      return captions;
+    }
+
+    captionTime(caption) {
+      return caption.updatedAt || caption.createdAt || 0;
+    }
+
+    captionOrder(caption) {
+      return caption.sortOrder ?? -this.captionTime(caption);
+    }
+
+    nextCaptionSortOrder(accountKey) {
+      const orders = this.store.list(accountKey).map((caption) => this.captionOrder(caption));
+      return orders.length ? Math.min(...orders) - 1 : 0;
+    }
+
+    resetGeneratorCaption() {
+      this.selectedSavedCaptionId = null;
+      this.dom.savedCaptionSelect.value = "";
+      this.setState({ caption: "" });
+    }
+
+    nextUnusedCaption(excludedId) {
+      return this.store.list(this.config.accountKey)
+        .filter((caption) => caption.status !== "used" && caption.id !== excludedId)
+        .sort((first, second) => this.captionOrder(first) - this.captionOrder(second))[0] || null;
+    }
+
+    handleCaptionToolbar(event) {
+      const button = event.target.closest("[data-action], [data-filter], [data-sort]");
+      if (!button) return;
+      const action = button.dataset.action;
+      if (button.dataset.filter) {
+        this.captionView.filter = button.dataset.filter;
+        this.closeToolbarMenus();
+        this.renderCaptionTable();
+        return;
+      }
+      if (button.dataset.sort) {
+        this.captionView.sort = button.dataset.sort;
+        this.closeToolbarMenus();
+        this.renderCaptionTable();
+        return;
+      }
+      if (action === "open-search") {
+        this.captionView.searchOpen = true;
+        this.syncCaptionToolbar();
+        this.dom.captionSearchInput.focus();
+      } else if (action === "close-search") {
+        this.captionView.searchOpen = false;
+        this.captionView.query = "";
+        this.dom.captionSearchInput.value = "";
+        this.syncCaptionToolbar();
+        this.renderCaptionTable();
+      } else if (action === "toggle-filter") {
+        this.toggleToolbarMenu(this.dom.filterMenu);
+      } else if (action === "toggle-sort") {
+        this.toggleToolbarMenu(this.dom.sortMenu);
+      } else if (action === "toggle-more") {
+        this.toggleToolbarMenu(this.dom.moreMenu);
+      } else if (action === "enter-manage") {
+        this.enterManagementMode();
+      } else if (action === "undo") {
+        this.undoManagementChange();
+      } else if (action === "redo") {
+        this.redoManagementChange();
+      } else if (action === "save-management") {
+        this.saveManagementChanges();
+      }
+    }
+
+    closeToolbarMenus() {
+      [this.dom.filterMenu, this.dom.sortMenu, this.dom.moreMenu].forEach((menu) => menu.classList.remove("open"));
+    }
+
+    toggleToolbarMenu(menu) {
+      const shouldOpen = !menu.classList.contains("open");
+      this.closeToolbarMenus();
+      menu.classList.toggle("open", shouldOpen);
+    }
+
+    syncCaptionToolbar() {
+      this.dom.captionToolbar.classList.toggle("search-active", this.captionView.searchOpen);
+      this.dom.captionToolbar.classList.toggle("management-active", this.captionView.management);
+      this.dom.captionTableWrap.classList.toggle("management-active", this.captionView.management);
+    }
+
+    enterManagementMode() {
+      if (this.captionView.management) return;
+      this.captionView.filter = "all";
+      this.captionView.sort = "default";
+      this.captionView.searchOpen = false;
+      this.captionView.query = "";
+      this.dom.captionSearchInput.value = "";
+      this.captionView.management = true;
+      this.captionView.order = this.visibleCaptions().map((caption) => caption.id);
+      this.captionView.pendingDeleteIds = new Set();
+      this.captionView.history = [];
+      this.captionView.redo = [];
+      this.closeToolbarMenus();
+      this.syncCaptionToolbar();
+      this.renderCaptionTable();
+    }
+
+    managementSnapshot() {
+      return {
+        order: [...this.captionView.order],
+        pendingDeleteIds: [...this.captionView.pendingDeleteIds]
+      };
+    }
+
+    applyManagementSnapshot(snapshot) {
+      this.captionView.order = [...snapshot.order];
+      this.captionView.pendingDeleteIds = new Set(snapshot.pendingDeleteIds);
+      this.renderCaptionTable();
+    }
+
+    saveManagementHistory() {
+      this.captionView.history.push(this.managementSnapshot());
+      this.captionView.redo = [];
+    }
+
+    undoManagementChange() {
+      const previous = this.captionView.history.pop();
+      if (!previous) return;
+      this.captionView.redo.push(this.managementSnapshot());
+      this.applyManagementSnapshot(previous);
+    }
+
+    redoManagementChange() {
+      const next = this.captionView.redo.pop();
+      if (!next) return;
+      this.captionView.history.push(this.managementSnapshot());
+      this.applyManagementSnapshot(next);
+    }
+
+    async saveManagementChanges() {
+      try {
+        const activeIds = this.captionView.order.filter((id) => !this.captionView.pendingDeleteIds.has(id));
+        await Promise.all(activeIds.map((id, index) => this.store.update(id, { sortOrder: index })));
+        await this.store.removeMany([...this.captionView.pendingDeleteIds]);
+        this.captionView.management = false;
+        this.captionView.order = [];
+        this.captionView.pendingDeleteIds = new Set();
+        this.captionView.history = [];
+        this.captionView.redo = [];
+        this.syncCaptionToolbar();
+        this.renderCaptionTable();
+      } catch (error) {
+        console.error(error);
+        this.setCaptionStorageStatus("Caption changes could not be saved. Check your Firebase setup.", true);
+      }
+    }
+
+    bindCaptionTableInteractions() {
+      let longPressTimer;
+      let draggedId;
+      let suppressClick = false;
+      const cancelLongPress = () => clearTimeout(longPressTimer);
+      this.dom.captionTableBody.addEventListener("pointerdown", (event) => {
+        if (this.captionView.management || event.target.closest("button, textarea")) return;
+        longPressTimer = setTimeout(() => {
+          suppressClick = true;
+          this.enterManagementMode();
+        }, 650);
+      });
+      this.dom.captionTableBody.addEventListener("pointerup", cancelLongPress);
+      this.dom.captionTableBody.addEventListener("pointerleave", cancelLongPress);
+      this.dom.captionTableBody.addEventListener("pointercancel", cancelLongPress);
+      this.dom.captionTableBody.addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-caption-id]");
+        if (!row) return;
+        if (suppressClick) {
+          suppressClick = false;
+          return;
+        }
+        if (this.captionView.management) {
+          if (event.target.closest('[data-action="toggle-delete"]')) {
+            this.saveManagementHistory();
+            const id = row.dataset.captionId;
+            if (this.captionView.pendingDeleteIds.has(id)) this.captionView.pendingDeleteIds.delete(id);
+            else this.captionView.pendingDeleteIds.add(id);
+            this.renderCaptionTable();
+          }
+          return;
+        }
+        if (this.captionView.searchOpen && this.captionView.query.trim()) {
+          this.revealSearchedCaption(row.dataset.captionId);
+          return;
+        }
+        this.editCaptionRow(row.dataset.captionId);
+      });
+      this.dom.captionTableBody.addEventListener("dragstart", (event) => {
+        if (!this.captionView.management) return;
+        draggedId = event.target.closest("tr")?.dataset.captionId;
+      });
+      this.dom.captionTableBody.addEventListener("dragover", (event) => event.preventDefault());
+      this.dom.captionTableBody.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const targetId = event.target.closest("tr")?.dataset.captionId;
+        if (!draggedId || !targetId || draggedId === targetId) return;
+        this.saveManagementHistory();
+        const order = this.captionView.order.filter((id) => id !== draggedId);
+        order.splice(order.indexOf(targetId), 0, draggedId);
+        this.captionView.order = order;
+        this.renderCaptionTable();
+      });
+    }
+
+    editCaptionRow(id) {
+      const caption = this.store.list(this.dom.captionAccountSelect.value).find((item) => item.id === id);
+      const row = this.dom.captionTableBody.querySelector(`[data-caption-id="${id}"]`);
+      if (!caption || !row) return;
+      const cell = row.querySelector(".caption-cell");
+      cell.innerHTML = `
+        <textarea class="inline-caption-editor" rows="3"></textarea>
+        <span class="inline-caption-actions">
+          <button type="button" data-action="save-edit">Save</button>
+          <button type="button" data-action="cancel-edit">Cancel</button>
+        </span>
+      `;
+      const editor = cell.querySelector("textarea");
+      editor.value = caption.caption;
+      editor.focus();
+      const handleEditAction = async (event) => {
+        const action = event.target.closest("button")?.dataset.action;
+        if (!action) return;
+        cell.removeEventListener("click", handleEditAction);
+        if (action === "cancel-edit") this.renderCaptionTable();
+        if (action === "save-edit") {
+          const text = editor.value.trim();
+          if (!text) return;
+          try {
+            await this.store.update(id, { caption: text });
+          } catch (error) {
+            console.error(error);
+            this.setCaptionStorageStatus("Caption could not be updated. Check your Firebase setup.", true);
+          }
+        }
+      };
+      cell.addEventListener("click", handleEditAction);
+    }
+
+    revealSearchedCaption(id) {
+      this.captionView.searchOpen = false;
+      this.captionView.query = "";
+      this.captionView.filter = "all";
+      this.dom.captionSearchInput.value = "";
+      this.syncCaptionToolbar();
+      this.renderCaptionTable();
+      requestAnimationFrame(() => this.dom.captionTableBody.querySelector(`[data-caption-id="${id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
     }
 
     setCaptionStorageStatus(message, isError = false) {
@@ -574,12 +903,30 @@ import { Storage } from "./storage.js";
       return items[(currentIndex + 1 + items.length) % items.length];
     }
 
-    downloadPost() {
+    async downloadPost() {
       this.renderer.download(`${this.config.accountKey.replace(/_/g, "-")}-post.jpg`);
       if (!this.state.caption.trim()) return;
 
+      const captionText = this.state.caption.trim();
+      const usedCaptionId = this.selectedSavedCaptionId;
+      try {
+        if (usedCaptionId) {
+          await this.store.update(usedCaptionId, { status: "used" });
+        } else {
+          await this.store.add(this.config.accountKey, captionText, {
+            status: "used",
+            sortOrder: this.nextCaptionSortOrder(this.config.accountKey)
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        this.setCaptionStorageStatus("The download completed, but the caption status could not be saved.", true);
+      }
+
       const nextPose = this.nextItem(this.assets.manifest[this.config.poseSet], this.state.husky);
-      const patch = { caption: "", husky: nextPose };
+      const nextCaption = usedCaptionId ? this.nextUnusedCaption(usedCaptionId) : null;
+      this.selectedSavedCaptionId = nextCaption?.id || null;
+      const patch = { caption: nextCaption?.caption || "", husky: nextPose };
 
       if (this.config === GENERATORS.pawsitive) {
         const nextBackground = this.nextItem(HUSKY_BACKGROUND_CYCLE, this.state.background);
@@ -588,6 +935,7 @@ import { Storage } from "./storage.js";
       }
 
       this.setState(patch);
+      this.renderSavedCaptionOptions();
     }
 
     syncGeneratorControls() {

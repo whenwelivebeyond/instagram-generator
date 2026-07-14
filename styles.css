@@ -202,6 +202,27 @@ button {
   font-weight: 800;
 }
 
+.caption-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label-icon-button,
+.toolbar-button,
+.row-delete-button {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 19px;
+  line-height: 1;
+}
+
 select,
 textarea,
 .image-select-button {
@@ -466,6 +487,105 @@ textarea {
   border-collapse: collapse;
 }
 
+.caption-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.caption-table-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.caption-toolbar,
+.management-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar-menu,
+.caption-search {
+  position: relative;
+}
+
+.toolbar-popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 12;
+  display: none;
+  min-width: 122px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.toolbar-popover.open {
+  display: grid;
+  gap: 2px;
+}
+
+.toolbar-popover button {
+  min-height: 34px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.toolbar-popover button:hover {
+  background: var(--accent-soft);
+}
+
+.search-field {
+  display: none;
+  align-items: center;
+  gap: 5px;
+}
+
+.search-field input {
+  width: min(240px, 52vw);
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.caption-toolbar.search-active > :not(.caption-search),
+.caption-toolbar.search-active .caption-search > .toolbar-button {
+  display: none;
+}
+
+.caption-toolbar.search-active .search-field {
+  display: flex;
+}
+
+.management-toolbar {
+  display: none;
+}
+
+.caption-toolbar.management-active > :not(.management-toolbar) {
+  display: none;
+}
+
+.caption-toolbar.management-active .management-toolbar {
+  display: flex;
+}
+
+.save-management {
+  color: #ffffff;
+  border-color: #111827;
+  background: #111827;
+}
+
 .caption-table th,
 .caption-table td {
   padding: 13px 10px;
@@ -474,15 +594,94 @@ textarea {
   vertical-align: top;
 }
 
-.caption-table th:last-child,
-.caption-table td:last-child {
-  width: 86px;
-  text-align: center;
-}
-
 .caption-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
   white-space: pre-wrap;
   line-height: 1.45;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.caption-cell > .caption-text {
+  flex: 1;
+}
+
+.caption-status {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.status-used {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.status-unused {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.management-active .caption-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  cursor: grab;
+}
+
+.move-handle {
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.caption-text {
+  flex: 1;
+}
+
+.row-delete-button {
+  flex: 0 0 auto;
+  color: #b42318;
+}
+
+.row-delete-button img {
+  width: 17px;
+  height: 17px;
+}
+
+.caption-table tr.pending-delete {
+  opacity: 0.48;
+  text-decoration: line-through;
+}
+
+.inline-caption-editor {
+  width: 100%;
+  min-height: 74px;
+  padding: 8px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.inline-caption-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.inline-caption-actions button {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
 }
 
 .delete-button {

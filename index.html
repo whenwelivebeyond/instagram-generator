@@ -58,7 +58,10 @@
             </div>
 
             <div class="control-group">
-              <label for="captionInput">Caption</label>
+              <div class="caption-label-row">
+                <label for="captionInput">Caption</label>
+                <button class="label-icon-button" id="resetCaptionButton" type="button" aria-label="Reset caption" title="Reset caption">↺</button>
+              </div>
               <textarea id="captionInput" rows="6" spellcheck="true" placeholder="enter caption here"></textarea>
             </div>
 
@@ -107,12 +110,50 @@
             <p class="storage-status" id="captionStorageStatus" role="status"></p>
           </section>
 
-          <section class="caption-table-wrap">
+          <section class="caption-table-wrap" id="captionTableWrap">
+            <div class="caption-table-header">
+              <h2>Saved captions</h2>
+              <div class="caption-toolbar" id="captionToolbar">
+                <div class="caption-search" id="captionSearch">
+                  <button class="toolbar-button" type="button" data-action="open-search" aria-label="Search captions" title="Search">⌕</button>
+                  <div class="search-field" id="searchField">
+                    <input id="captionSearchInput" type="search" placeholder="Search captions">
+                    <button class="toolbar-button" type="button" data-action="close-search" aria-label="Close search">×</button>
+                  </div>
+                </div>
+                <div class="toolbar-menu">
+                  <button class="toolbar-button" type="button" data-action="toggle-filter" aria-label="Filter captions" title="Filter">⌄</button>
+                  <div class="toolbar-popover" id="filterMenu">
+                    <button type="button" data-filter="used">Used</button>
+                    <button type="button" data-filter="unused">Unused</button>
+                    <button type="button" data-filter="all">All</button>
+                  </div>
+                </div>
+                <div class="toolbar-menu">
+                  <button class="toolbar-button" type="button" data-action="toggle-sort" aria-label="Sort captions" title="Sort">⇅</button>
+                  <div class="toolbar-popover" id="sortMenu">
+                    <button type="button" data-sort="default">Default</button>
+                    <button type="button" data-sort="latest">Latest</button>
+                    <button type="button" data-sort="earliest">Earliest</button>
+                  </div>
+                </div>
+                <div class="toolbar-menu">
+                  <button class="toolbar-button" id="captionMoreButton" type="button" data-action="toggle-more" aria-label="More caption actions" title="More actions">⋮</button>
+                  <div class="toolbar-popover" id="moreMenu">
+                    <button type="button" data-action="enter-manage">Reorder list</button>
+                  </div>
+                </div>
+                <div class="management-toolbar" id="managementToolbar">
+                  <button class="toolbar-button" type="button" data-action="undo" aria-label="Undo" title="Undo">↶</button>
+                  <button class="toolbar-button" type="button" data-action="redo" aria-label="Redo" title="Redo">↷</button>
+                  <button class="toolbar-button save-management" type="button" data-action="save-management" aria-label="Save list changes" title="Save changes">✓</button>
+                </div>
+              </div>
+            </div>
             <table class="caption-table">
               <thead>
                 <tr>
                   <th>Caption</th>
-                  <th>Delete</th>
                 </tr>
               </thead>
               <tbody id="captionTableBody"></tbody>

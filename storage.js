@@ -26,12 +26,13 @@ export const Storage = {
     );
   },
 
-  async saveCaption(account, caption) {
+  async saveCaption(account, caption, { status = "unused", sortOrder = -Date.now() } = {}) {
     const now = Date.now();
     return addDoc(collection(db, CAPTIONS_COLLECTION), {
       account,
       caption,
-      status: "unused",
+      status,
+      sortOrder,
       createdAt: now,
       updatedAt: now,
       createdAtServer: serverTimestamp(),
@@ -44,10 +45,18 @@ export const Storage = {
   },
 
   async updateStatus(id, status) {
+    return this.updateCaption(id, { status });
+  },
+
+  async updateCaption(id, patch) {
     return updateDoc(doc(db, CAPTIONS_COLLECTION, id), {
-      status,
+      ...patch,
       updatedAt: Date.now(),
       updatedAtServer: serverTimestamp()
     });
+  },
+
+  async deleteCaptions(ids) {
+    return Promise.all(ids.map((id) => this.deleteCaption(id)));
   }
 };
