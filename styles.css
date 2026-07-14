@@ -589,9 +589,12 @@ textarea {
   margin: 0;
   color: var(--text);
   font-size: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .group-edit-button {
+  flex: 0 0 auto;
   width: 30px;
   height: 30px;
   border: 1px solid #252525;
@@ -913,5 +916,41 @@ textarea {
   .caption-table-wrap,
   .preview-panel {
     padding: 12px;
+  }
+
+  .caption-table-header {
+    flex-wrap: wrap;
+  }
+
+  .caption-toolbar.search-active {
+    width: 100%;
+  }
+
+  .caption-toolbar.search-active .caption-search,
+  .caption-toolbar.search-active .search-field {
+    width: 100%;
+  }
+
+  .caption-toolbar.search-active .search-field input {
+    width: auto;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .hashtag-add-row {
+    flex-wrap: wrap;
+  }
+
+  .hashtag-add-row select {
+    flex: 1 1 145px;
+    min-width: 0;
+  }
+
+  .hashtag-add-row input {
+    flex: 1 1 160px;
+  }
+
+  .hashtag-save-button {
+    flex: 0 0 auto;
   }
 }
