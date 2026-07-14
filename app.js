@@ -1,4 +1,5 @@
 import { Storage } from "./storage.js";
+import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
 (() => {
   const EXPORT_WIDTH = 1080;
@@ -213,6 +214,10 @@ import { Storage } from "./storage.js";
         this.data = hashtags;
         this.emitChange();
       });
+    }
+
+    async seedDefaults(seedData) {
+      return Storage.seedHashtags(seedData);
     }
 
     list(account, group) {
@@ -487,6 +492,7 @@ import { Storage } from "./storage.js";
       }
       try {
         await this.hashtagStore.connect();
+        await this.hashtagStore.seedDefaults(DEFAULT_HASHTAGS);
       } catch (error) {
         console.error(error);
         this.setCaptionStorageStatus("Hashtags could not connect to Firebase. Update the Firestore rules.", true);

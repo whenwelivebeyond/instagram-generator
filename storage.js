@@ -4,14 +4,17 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   serverTimestamp,
   setDoc,
-  updateDoc
+  updateDoc,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const CAPTIONS_COLLECTION = "captions";
 const HASHTAGS_COLLECTION = "hashtags";
+const HASHTAG_SEED_MARKER = "hashtag_seed_v1";
 
 export const Storage = {
   async subscribe(onChange, onError) {
@@ -91,5 +94,29 @@ export const Storage = {
 
   async deleteHashtag(id) {
     return deleteDoc(doc(db, HASHTAGS_COLLECTION, id));
+  },
+
+  async seedHashtags(seedData) {
+    await ensureSignedIn();
+    const marker = doc(db, "app_metadata", HASHTAG_SEED_MARKER);
+    if ((await getDoc(marker)).exists()) return false;
+    const batch = writeBatch(db);
+    const now = Date.now();
+    Object.entries(seedData).forEach(([account, groups]) => {
+      Object.entries(groups).forEach(([group, hashtags]) => {
+        hashtags.forEach((text) => {
+          batch.set(doc(db, HASHTAGS_COLLECTION, `seed_${account}_${group}_${text}`), {
+            account,
+            group,
+            text,
+            createdAt: now,
+            createdAtServer: serverTimestamp()
+          });
+        });
+      });
+    });
+    batch.set(marker, { completedAt: now });
+    await batch.commit();
+    return true;
   }
 };
