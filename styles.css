@@ -619,7 +619,7 @@ textarea {
   gap: 5px;
   padding: 5px 8px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--surface-strong);
   color: var(--text);
   font-size: 13px;
@@ -642,6 +642,12 @@ textarea {
   place-items: center;
 }
 
+.hashtag-chip button img {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
 .hashtag-add-row {
   display: flex;
   gap: 8px;
@@ -650,14 +656,20 @@ textarea {
 .hashtag-add-row input {
   min-width: 0;
   flex: 1;
-  min-height: 40px;
-  padding: 0 12px;
+  min-height: 52px;
+  padding: 0 15px;
   border: 1px solid var(--border);
   border-radius: 6px;
 }
 
+.hashtag-add-row select {
+  width: auto;
+  flex: 0 0 180px;
+  min-height: 52px;
+}
+
 .hashtag-save-button {
-  min-height: 40px;
+  min-height: 52px;
   padding: 0 14px;
   border: 0;
   border-radius: 6px;

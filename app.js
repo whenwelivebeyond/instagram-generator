@@ -400,6 +400,7 @@ import { Storage } from "./storage.js";
       this.selectedSavedCaptionId = null;
       this.openHashtagAccounts = new Set();
       this.editingHashtagGroups = new Set();
+      this.selectedHashtagGroups = {};
       this.captionView = {
         filter: "all",
         sort: "default",
@@ -650,6 +651,10 @@ import { Storage } from "./storage.js";
     }
 
     bindHashtagPage() {
+      this.dom.hashtagsPageContent.addEventListener("change", (event) => {
+        const select = event.target.closest("[data-hashtag-group-select]");
+        if (select) this.selectedHashtagGroups[select.dataset.hashtagGroupSelect] = select.value;
+      });
       this.dom.hashtagsPageContent.addEventListener("input", (event) => {
         const input = event.target.closest("[data-hashtag-input]");
         if (input) input.value = this.normalizeHashtag(input.value);
@@ -669,11 +674,13 @@ import { Storage } from "./storage.js";
           else this.editingHashtagGroups.add(key);
           this.renderHashtagPage();
         } else if (button.dataset.action === "save-hashtag") {
-          const input = this.dom.hashtagsPageContent.querySelector(`[data-hashtag-input="${account}:${group}"]`);
+          const input = this.dom.hashtagsPageContent.querySelector(`[data-hashtag-input="${account}"]`);
+          const groupSelect = this.dom.hashtagsPageContent.querySelector(`[data-hashtag-group-select="${account}"]`);
+          const selectedGroup = groupSelect?.value;
           const text = this.normalizeHashtag(input?.value || "");
-          if (!text) return;
+          if (!text || !selectedGroup) return;
           try {
-            await this.hashtagStore.add(account, group, text);
+            await this.hashtagStore.add(account, selectedGroup, text);
             input.value = "";
           } catch (error) {
             console.error(error);
@@ -694,12 +701,20 @@ import { Storage } from "./storage.js";
       this.dom.hashtagsPageContent.innerHTML = Object.entries(HASHTAG_GROUPS).map(([account, config]) => {
         const isOpen = this.openHashtagAccounts.has(account);
         const arrow = isOpen ? this.assets.manifest.icons.dropdownUp : this.assets.manifest.icons.dropdownDown;
+        const selectedGroup = this.selectedHashtagGroups[account] || config.groups[0][0];
         return `
           <section class="hashtag-account ${isOpen ? "open" : ""}">
             <button class="hashtag-account-toggle" type="button" data-action="toggle-account" data-account="${account}">
               <span>${config.label}</span><img src="${arrow}" alt="">
             </button>
             <div class="hashtag-account-content">
+              <div class="hashtag-add-row">
+                <select data-hashtag-group-select="${account}" aria-label="Choose hashtag subsection">
+                  ${config.groups.map(([group, label]) => `<option value="${group}" ${group === selectedGroup ? "selected" : ""}>${label}</option>`).join("")}
+                </select>
+                <input type="text" data-hashtag-input="${account}" placeholder="Add hashtag" aria-label="Add hashtag">
+                <button class="hashtag-save-button" type="button" data-action="save-hashtag" data-account="${account}">Save</button>
+              </div>
               ${config.groups.map(([group, label]) => this.renderHashtagGroup(account, group, label)).join("")}
             </div>
           </section>
@@ -718,11 +733,7 @@ import { Storage } from "./storage.js";
             <button class="group-edit-button" type="button" data-action="toggle-edit" data-account="${account}" data-group="${group}" aria-label="Edit ${label} hashtags">✎</button>
           </div>
           <div class="hashtag-chips ${isEditing ? "editing" : ""}">
-            ${hashtags.map((hashtag) => `<span class="hashtag-chip">#${hashtag.text}${isEditing ? `<button type="button" data-action="delete-hashtag" data-hashtag-id="${hashtag.id}" aria-label="Delete #${hashtag.text}">×</button>` : ""}</span>`).join("")}
-          </div>
-          <div class="hashtag-add-row">
-            <input type="text" data-hashtag-input="${editKey}" placeholder="Add hashtag" aria-label="Add ${label} hashtag">
-            <button class="hashtag-save-button" type="button" data-action="save-hashtag" data-account="${account}" data-group="${group}">Save</button>
+            ${hashtags.map((hashtag) => `<span class="hashtag-chip">#${hashtag.text}${isEditing ? `<button type="button" data-action="delete-hashtag" data-hashtag-id="${hashtag.id}" aria-label="Delete #${hashtag.text}"><img src="assets/icons/Close small.svg" alt=""></button>` : ""}</span>`).join("")}
           </div>
         </section>
       `;
