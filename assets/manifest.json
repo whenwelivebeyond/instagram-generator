@@ -1,0 +1,49 @@
+{
+  "backgrounds": [
+    "assets/backgrounds/Blue.jpg",
+    "assets/backgrounds/Green.jpg",
+    "assets/backgrounds/Red.jpg",
+    "assets/backgrounds/Yellow.jpg"
+  ],
+  "huskies": [
+    "assets/huskies/Pose=1.png",
+    "assets/huskies/Pose=2.png",
+    "assets/huskies/Pose=3.png",
+    "assets/huskies/Pose=4.png",
+    "assets/huskies/Pose=5.png",
+    "assets/huskies/Pose=6.png",
+    "assets/huskies/Pose=7.png",
+    "assets/huskies/Pose=8.png",
+    "assets/huskies/Pose=9.png",
+    "assets/huskies/Pose=10.png",
+    "assets/huskies/Pose=11.png",
+    "assets/huskies/Pose=12.png",
+    "assets/huskies/Pose=13.png",
+    "assets/huskies/Pose=14.png",
+    "assets/huskies/Pose=15.png",
+    "assets/huskies/Pose=16.png",
+    "assets/huskies/Pose=17.png",
+    "assets/huskies/Pose=18.png",
+    "assets/huskies/Pose=19.png",
+    "assets/huskies/Pose=20.png"
+  ],
+  "donkeys": [
+    "assets/donkey/Pose 1.png", "assets/donkey/Pose 2.png", "assets/donkey/Pose 3.png", "assets/donkey/Pose 4.png", "assets/donkey/Pose 5.png", "assets/donkey/Pose 6.png", "assets/donkey/Pose 7.png", "assets/donkey/Pose 8.png", "assets/donkey/Pose 9.png", "assets/donkey/Pose 10.png", "assets/donkey/Pose 11.png", "assets/donkey/Pose 12.png", "assets/donkey/Pose 13.png", "assets/donkey/Pose 14.png"
+  ],
+  "cows": [
+    "assets/cow/Pose 1.png", "assets/cow/Pose 2.png", "assets/cow/Pose 3.png", "assets/cow/Pose 4.png", "assets/cow/Pose 5.png", "assets/cow/Pose 6.png", "assets/cow/Pose 7.png", "assets/cow/Pose 8.png", "assets/cow/Pose 9.png", "assets/cow/Pose 10.png", "assets/cow/Pose 11.png", "assets/cow/Pose 12.png", "assets/cow/Pose 13.png", "assets/cow/Pose 14.png", "assets/cow/Pose 15.png", "assets/cow/Pose 16.png", "assets/cow/Pose 17.png", "assets/cow/Pose 18.png"
+  ],
+  "icons": {
+    "alignLeft": "assets/icons/Left alignment.svg",
+    "alignCenter": "assets/icons/Center alignment.svg",
+    "alignRight": "assets/icons/Right alignment.svg",
+    "delete": "assets/icons/Delete.svg"
+  },
+  "template": {
+    "bowl": "assets/template/bowl.png",
+    "stones": "assets/template/stones.png"
+  },
+  "fonts": {
+    "patrickHandSc": "assets/fonts/PatrickHandSC-Regular.ttf"
+  }
+}

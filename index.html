@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Post Generator</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <button class="menu-button" id="menuButton" type="button" aria-label="Open navigation" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <h1 id="pageTitle">Content Generator</h1>
+    </header>
+
+    <nav class="side-menu" id="sideMenu" aria-label="Primary navigation">
+      <button class="nav-item active" type="button" data-page="generator">Content Generator</button>
+      <button class="nav-item" type="button" data-page="captions">Caption Center</button>
+    </nav>
+    <div class="menu-scrim" id="menuScrim"></div>
+
+    <main class="app-shell">
+      <section class="page active" id="generatorPage" data-title="Content Generator">
+        <div class="generator-layout">
+          <section class="preview-panel" aria-label="Post preview">
+            <canvas id="previewCanvas" width="1080" height="1920"></canvas>
+          </section>
+
+          <section class="controls-panel" aria-label="Post controls">
+            <div class="control-group">
+              <label for="accountSelect">Account</label>
+              <select id="accountSelect">
+                <option value="pawsitive">pawsitive.husky</option>
+                <option value="donkey">the.corporate.donkey</option>
+                <option value="cow">the.mooing.aunty</option>
+              </select>
+            </div>
+
+            <div class="control-group" id="backgroundControl">
+              <label>Background</label>
+              <div class="background-grid" id="backgroundGrid"></div>
+            </div>
+
+            <div class="control-group">
+              <label for="huskyPickerButton">Pose selector</label>
+              <div class="image-select" id="huskySelect">
+                <button class="image-select-button" id="huskyPickerButton" type="button" aria-haspopup="listbox" aria-expanded="false"></button>
+                <div class="image-options" id="huskyOptions" role="listbox"></div>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="savedCaptionSelect">Saved caption</label>
+              <select id="savedCaptionSelect"></select>
+            </div>
+
+            <div class="control-group">
+              <label for="captionInput">Caption</label>
+              <textarea id="captionInput" rows="6" spellcheck="true" placeholder="enter caption here"></textarea>
+            </div>
+
+            <div class="control-row">
+              <div class="control-group compact">
+                <label>Alignment</label>
+                <div class="segmented" id="alignmentButtons"></div>
+              </div>
+
+              <div class="control-group compact" id="textColorControl">
+                <label>Text color</label>
+                <div class="swatches" id="textColorButtons">
+                  <button class="swatch active" type="button" data-color="#FFFFFF" aria-label="White text">
+                  <span style="background:#FFFFFF"></span>
+                </button>
+                <button class="swatch" type="button" data-color="#252525" aria-label="Black text">
+                <span style="background:#252525"></span>
+                </button>
+                </div>
+              </div>
+            </div>
+
+            
+
+            <button class="download-button" id="downloadButton" type="button">Download JPEG</button>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="captionsPage" data-title="Caption Center">
+        <div class="caption-center">
+          <section class="caption-form">
+            <div class="control-group">
+              <label for="captionAccountSelect">Account</label>
+              <select id="captionAccountSelect">
+                <option value="pawsitive_husky">Pawsitive.husky</option>
+                <option value="corporate_donkey">The.corporate.donkey</option>
+                <option value="mooing_aunty">The.mooing.aunty</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="captionCenterInput">Caption</label>
+              <textarea id="captionCenterInput" rows="8" spellcheck="true"></textarea>
+            </div>
+            <button class="download-button" id="saveCaptionButton" type="button">Save Caption</button>
+          </section>
+
+          <section class="caption-table-wrap">
+            <table class="caption-table">
+              <thead>
+                <tr>
+                  <th>Caption</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody id="captionTableBody"></tbody>
+            </table>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
