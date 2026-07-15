@@ -6,26 +6,17 @@
     "assets/backgrounds/Yellow.jpg"
   ],
   "huskies": [
-    "assets/huskies/Pose=1.png",
-    "assets/huskies/Pose=2.png",
-    "assets/huskies/Pose=3.png",
-    "assets/huskies/Pose=4.png",
-    "assets/huskies/Pose=5.png",
-    "assets/huskies/Pose=6.png",
-    "assets/huskies/Pose=7.png",
-    "assets/huskies/Pose=8.png",
-    "assets/huskies/Pose=9.png",
-    "assets/huskies/Pose=10.png",
-    "assets/huskies/Pose=11.png",
-    "assets/huskies/Pose=12.png",
-    "assets/huskies/Pose=13.png",
-    "assets/huskies/Pose=14.png",
-    "assets/huskies/Pose=15.png",
-    "assets/huskies/Pose=16.png",
-    "assets/huskies/Pose=17.png",
-    "assets/huskies/Pose=18.png",
-    "assets/huskies/Pose=19.png",
-    "assets/huskies/Pose=20.png"
+    "assets/huskies/Pose 1.png",
+    "assets/huskies/Pose 2.png",
+    "assets/huskies/Pose 3.png",
+    "assets/huskies/Pose 4.png",
+    "assets/huskies/Pose 5.png",
+    "assets/huskies/Pose 6.png",
+    "assets/huskies/Pose 7.png",
+    "assets/huskies/Pose 8.png",
+    "assets/huskies/Pose 9.png",
+    "assets/huskies/Pose 10.png",
+    "assets/huskies/Pose 11.png"
   ],
   "donkeys": [
     "assets/donkey/Pose 1.png", "assets/donkey/Pose 2.png", "assets/donkey/Pose 3.png", "assets/donkey/Pose 4.png", "assets/donkey/Pose 5.png", "assets/donkey/Pose 6.png", "assets/donkey/Pose 7.png", "assets/donkey/Pose 8.png", "assets/donkey/Pose 9.png", "assets/donkey/Pose 10.png", "assets/donkey/Pose 11.png", "assets/donkey/Pose 12.png", "assets/donkey/Pose 13.png", "assets/donkey/Pose 14.png"

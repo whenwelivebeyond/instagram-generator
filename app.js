@@ -46,7 +46,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       accountKey: "pawsitive_husky",
       defaultCaption: "",
       defaultBackground: "assets/backgrounds/Red.jpg",
-      defaultHusky: "assets/huskies/Pose=14.png",
+      defaultHusky: "assets/huskies/Pose 1.png",
       poseSet: "huskies",
       allowBackgroundChoice: true,
       allowTextColorChoice: true,
@@ -606,8 +606,6 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     bindGeneratorControls() {
       this.dom.accountSelect.addEventListener("change", (event) => this.selectGenerator(event.target.value));
       this.dom.captionInput.addEventListener("input", (event) => {
-        this.selectedSavedCaptionId = null;
-        this.dom.savedCaptionSelect.value = "";
         this.setState({ caption: event.target.value });
       });
       this.dom.hashtagsInput.addEventListener("input", () => {
@@ -848,8 +846,12 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     renderCaptionTable() {
       const captions = this.visibleCaptions();
-      const filterLabel = this.captionView.filter === "all" ? "all" : this.captionView.filter;
-      this.dom.captionListSubtitle.textContent = `Showing ${filterLabel} captions`;
+      const subtitle = this.captionView.filter === "used"
+        ? 'Showing <span class="caption-status-word used">Used</span> captions'
+        : this.captionView.filter === "unused"
+          ? 'Showing <span class="caption-status-word unused">Unused</span> captions'
+          : "Showing all captions";
+      this.dom.captionListSubtitle.innerHTML = subtitle;
       this.dom.captionTableBody.innerHTML = "";
       if (!captions.length) {
         this.dom.captionTableBody.innerHTML = '<tr><td class="empty-row">No captions match this view.</td></tr>';
@@ -1076,6 +1078,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
           if (event.target.closest('[data-action="delete-now"]')) await this.deleteCaptionNow(id);
           return;
         }
+        // Let textarea clicks keep their native caret position instead of reopening the editor.
+        if (event.target.closest(".inline-caption-editor, .inline-caption-actions")) return;
         if (this.captionView.searchOpen && this.captionView.query.trim()) {
           this.revealSearchedCaption(row.dataset.captionId);
           return;
