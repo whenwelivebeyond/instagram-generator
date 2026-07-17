@@ -407,7 +407,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.editingHashtagGroups = new Set();
       this.selectedHashtagGroups = {};
       this.captionView = {
-        filter: "all",
+        filter: "unused",
         sort: "default",
         searchOpen: false,
         query: "",
