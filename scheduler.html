@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Scheduler</title>
+    <link rel="stylesheet" href="scheduler.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="back-link" href="index.html" aria-label="Back to Content Generator">← <span>Content Generator</span></a>
+      <h1>Post Scheduler</h1>
+    </header>
+
+    <main class="scheduler-shell">
+      <section class="intro-card">
+        <p class="eyebrow">SCHEDULING WORKSPACE</p>
+        <h2>Plan posts. Publish automatically.</h2>
+        <p>Your existing generator remains unchanged. This separate workspace will become the place to schedule completed posts.</p>
+      </section>
+
+      <section class="setup-card" aria-labelledby="connection-title">
+        <div>
+          <p class="eyebrow">STEP 1 OF 4</p>
+          <h2 id="connection-title">Connect Instagram</h2>
+          <p>Instagram has not been connected yet. We will add the secure Meta connection after the scheduling queue is ready.</p>
+        </div>
+        <span class="status-chip">Not connected</span>
+      </section>
+
+      <section class="queue-card" aria-labelledby="queue-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">UPCOMING POSTS</p>
+            <h2 id="queue-title">Scheduled queue</h2>
+          </div>
+          <span class="queue-count" id="queueCount">0 posts</span>
+        </div>
+        <div class="empty-queue" id="emptyQueue">
+          <div class="empty-icon" aria-hidden="true">◷</div>
+          <h3>No posts scheduled yet</h3>
+          <p>Once scheduling is connected to the generator, your planned posts will appear here.</p>
+        </div>
+      </section>
+
+      <section class="roadmap-card" aria-labelledby="next-title">
+        <p class="eyebrow">NEXT</p>
+        <h2 id="next-title">What we will add next</h2>
+        <ol>
+          <li>Schedule a generated image with a date and time.</li>
+          <li>Save the post, caption, and hashtags securely in the cloud.</li>
+          <li>Connect your professional Instagram account through Meta.</li>
+          <li>Publish due posts automatically, even while this app is closed.</li>
+        </ol>
+      </section>
+    </main>
+
+    <script type="module" src="scheduler.js"></script>
+  </body>
+</html>
