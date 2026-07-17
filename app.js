@@ -414,7 +414,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         management: false,
         order: [],
         history: [],
-        redo: []
+        redo: [],
+        page: 1,
+        pageSize: 50
       };
       this.dom = this.getDom();
       this.renderer = new PostRenderer(this.dom.previewCanvas, assets, this.config);
@@ -447,7 +449,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         resetCaptionCenterButton: document.querySelector("#resetCaptionCenterButton"),
         saveCaptionButton: document.querySelector("#saveCaptionButton"),
         captionStorageStatus: document.querySelector("#captionStorageStatus"),
-        captionTableBody: document.querySelector("#captionTableBody")
+        captionTableBody: document.querySelector("#captionTableBody"),
+        captionPagination: document.querySelector("#captionPagination")
         ,captionTableWrap: document.querySelector("#captionTableWrap")
         ,captionToolbar: document.querySelector("#captionToolbar")
         ,captionListSubtitle: document.querySelector("#captionListSubtitle")
@@ -630,7 +633,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     bindCaptionCenter() {
-      this.dom.captionAccountSelect.addEventListener("change", () => this.renderCaptionTable());
+      this.dom.captionAccountSelect.addEventListener("change", () => {
+        this.captionView.page = 1;
+        this.renderCaptionTable();
+      });
       this.dom.resetCaptionCenterButton.addEventListener("click", () => {
         this.dom.captionCenterInput.value = "";
       });
@@ -649,6 +655,13 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.dom.captionToolbar.addEventListener("click", (event) => this.handleCaptionToolbar(event));
       this.dom.captionSearchInput.addEventListener("input", (event) => {
         this.captionView.query = event.target.value;
+        this.captionView.page = 1;
+        this.renderCaptionTable();
+      });
+      this.dom.captionPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-caption-page]");
+        if (!button || button.disabled) return;
+        this.captionView.page = Number(button.dataset.captionPage);
         this.renderCaptionTable();
       });
       this.bindCaptionTableInteractions();
@@ -849,17 +862,22 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     renderCaptionTable() {
       const captions = this.visibleCaptions();
       const subtitle = this.captionView.filter === "used"
-        ? 'Showing <span class="caption-status-word used">Used</span> captions'
+        ? `Showing <span class="caption-status-word used">Used</span> captions <span class="caption-count">(${captions.length})</span>`
         : this.captionView.filter === "unused"
-          ? 'Showing <span class="caption-status-word unused">Unused</span> captions'
-          : "Showing all captions";
+          ? `Showing <span class="caption-status-word unused">Unused</span> captions <span class="caption-count">(${captions.length})</span>`
+          : `Showing all captions <span class="caption-count">(${captions.length})</span>`;
       this.dom.captionListSubtitle.innerHTML = subtitle;
       this.dom.captionTableBody.innerHTML = "";
+      const pageCount = Math.max(1, Math.ceil(captions.length / this.captionView.pageSize));
+      this.captionView.page = Math.min(Math.max(1, this.captionView.page), pageCount);
+      const start = (this.captionView.page - 1) * this.captionView.pageSize;
+      const pageCaptions = captions.slice(start, start + this.captionView.pageSize);
       if (!captions.length) {
         this.dom.captionTableBody.innerHTML = '<tr><td class="empty-row">No captions match this view.</td></tr>';
+        this.renderCaptionPagination(0, 0);
         return;
       }
-      captions.forEach((caption) => {
+      pageCaptions.forEach((caption) => {
         const row = document.createElement("tr");
         row.dataset.captionId = caption.id;
         row.innerHTML = '<td class="caption-cell"></td>';
@@ -877,6 +895,22 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         }
         this.dom.captionTableBody.append(row);
       });
+      this.renderCaptionPagination(captions.length, pageCount);
+    }
+
+    renderCaptionPagination(total, pageCount) {
+      if (pageCount <= 1) {
+        this.dom.captionPagination.innerHTML = "";
+        return;
+      }
+      const first = (this.captionView.page - 1) * this.captionView.pageSize + 1;
+      const last = Math.min(total, this.captionView.page * this.captionView.pageSize);
+      this.dom.captionPagination.innerHTML = `
+        <span class="caption-page-summary">${first}–${last} of ${total}</span>
+        <button type="button" data-caption-page="${this.captionView.page - 1}" ${this.captionView.page === 1 ? "disabled" : ""}>Previous</button>
+        <span class="caption-page-current">Page ${this.captionView.page} of ${pageCount}</span>
+        <button type="button" data-caption-page="${this.captionView.page + 1}" ${this.captionView.page === pageCount ? "disabled" : ""}>Next</button>
+      `;
     }
 
     visibleCaptions() {
@@ -929,12 +963,14 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       const action = button.dataset.action;
       if (button.dataset.filter) {
         this.captionView.filter = button.dataset.filter;
+        this.captionView.page = 1;
         this.closeToolbarMenus();
         this.renderCaptionTable();
         return;
       }
       if (button.dataset.sort) {
         this.captionView.sort = button.dataset.sort;
+        this.captionView.page = 1;
         this.closeToolbarMenus();
         this.renderCaptionTable();
         return;
@@ -946,6 +982,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       } else if (action === "close-search") {
         this.captionView.searchOpen = false;
         this.captionView.query = "";
+        this.captionView.page = 1;
         this.dom.captionSearchInput.value = "";
         this.syncCaptionToolbar();
         this.renderCaptionTable();
@@ -986,6 +1023,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.captionView.query = "";
       this.dom.captionSearchInput.value = "";
       this.captionView.management = true;
+      this.captionView.page = 1;
       this.captionView.order = this.visibleCaptions().map((caption) => caption.id);
       this.captionView.history = [];
       this.captionView.redo = [];
@@ -1049,6 +1087,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.captionView.order = [];
       this.captionView.history = [];
       this.captionView.redo = [];
+      this.captionView.page = 1;
       this.syncCaptionToolbar();
       this.renderCaptionTable();
     }
@@ -1155,6 +1194,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.captionView.query = "";
       this.captionView.filter = "all";
       this.dom.captionSearchInput.value = "";
+      const resultIndex = this.visibleCaptions().findIndex((caption) => caption.id === id);
+      this.captionView.page = resultIndex < 0 ? 1 : Math.floor(resultIndex / this.captionView.pageSize) + 1;
       this.syncCaptionToolbar();
       this.renderCaptionTable();
       requestAnimationFrame(() => this.dom.captionTableBody.querySelector(`[data-caption-id="${id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
