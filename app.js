@@ -829,7 +829,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     renderSavedCaptionOptions() {
       const captions = this.store.list(this.config.accountKey)
         .filter((caption) => caption.status !== "used")
-        .sort((first, second) => this.captionOrder(first) - this.captionOrder(second));
+        // The generator works through the oldest saved captions first.
+        // Caption Center keeps its own manually managed display order.
+        .sort((first, second) => this.captionTime(first) - this.captionTime(second));
       this.dom.savedCaptionSelect.innerHTML = '<option value="">Choose a saved caption</option>';
       captions.forEach((caption, index) => {
         const option = document.createElement("option");
