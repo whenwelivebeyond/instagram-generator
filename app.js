@@ -9,10 +9,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
   const GENERATOR_STATE_KEY = "instagram_generator_account_states";
   const LAST_GENERATOR_KEY = "instagram_generator_last_account";
   const HUSKY_BACKGROUND_CYCLE = [
+    "assets/backgrounds/Red.jpg",
     "assets/backgrounds/Yellow.jpg",
     "assets/backgrounds/Green.jpg",
-    "assets/backgrounds/Blue.jpg",
-    "assets/backgrounds/Red.jpg"
+    "assets/backgrounds/Blue.jpg"
   ];
   const YELLOW_BACKGROUND = "assets/backgrounds/Yellow.jpg";
   const BLACK_TEXT = "#252525";
@@ -403,6 +403,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.config = GENERATORS[this.generatorKey];
       this.state = this.stateForGenerator(this.generatorKey);
       this.selectedSavedCaptionId = null;
+      this.shouldPrefillInitialCaption = true;
       this.openHashtagAccounts = new Set();
       this.editingHashtagGroups = new Set();
       this.selectedHashtagGroups = {};
@@ -472,6 +473,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.bindHashtagPage();
       this.store.onChange(() => {
         this.renderSavedCaptionOptions();
+        if (this.shouldPrefillInitialCaption) {
+          this.prefillInitialSavedCaption();
+          this.shouldPrefillInitialCaption = false;
+        }
         this.renderCaptionTable();
       });
       this.hashtagStore.onChange(() => {
@@ -841,7 +846,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     renderSavedCaptionOptions() {
       const captions = this.store.list(this.config.accountKey)
-        .filter((caption) => caption.status !== "used")
+        .filter((caption) => (caption.status || "unused") === "unused")
         // The generator works through the oldest saved captions first.
         // Caption Center keeps its own manually managed display order.
         .sort((first, second) => this.captionTime(first) - this.captionTime(second));
@@ -857,6 +862,16 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       } else {
         this.selectedSavedCaptionId = null;
       }
+    }
+
+    prefillInitialSavedCaption() {
+      const firstCaption = this.store.list(this.config.accountKey)
+        .filter((caption) => (caption.status || "unused") === "unused")
+        .sort((first, second) => this.captionTime(first) - this.captionTime(second))[0];
+      if (!firstCaption) return;
+      this.selectedSavedCaptionId = firstCaption.id;
+      this.dom.savedCaptionSelect.value = firstCaption.id;
+      this.setState({ caption: firstCaption.caption });
     }
 
     renderCaptionTable() {
@@ -953,8 +968,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     nextUnusedCaption(excludedId) {
       return this.store.list(this.config.accountKey)
-        .filter((caption) => caption.status !== "used" && caption.id !== excludedId)
-        .sort((first, second) => this.captionOrder(first) - this.captionOrder(second))[0] || null;
+        .filter((caption) => (caption.status || "unused") === "unused" && caption.id !== excludedId)
+        // Match the saved-caption dropdown: use the oldest remaining caption first.
+        .sort((first, second) => this.captionTime(first) - this.captionTime(second))[0] || null;
     }
 
     handleCaptionToolbar(event) {
