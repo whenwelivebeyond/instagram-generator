@@ -3,93 +3,88 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post Scheduler</title>
+    <title>Scheduler</title>
     <link rel="stylesheet" href="scheduler.css">
   </head>
   <body>
-    <header class="site-header">
-      <a class="back-link" href="index.html" aria-label="Back to Content Generator">← <span>Content Generator</span></a>
-      <h1>Post Scheduler</h1>
+    <header class="scheduler-header">
+      <a class="icon-link" href="index.html" aria-label="Back to Content Generator">←</a>
+      <h1 id="schedulerTitle">Scheduler</h1>
+      <span class="header-spacer" aria-hidden="true"></span>
     </header>
 
     <main class="scheduler-shell">
-      <section class="intro-card">
-        <p class="eyebrow">SCHEDULING WORKSPACE</p>
-        <h2>Plan posts. Publish automatically.</h2>
-        <p>Your existing generator remains unchanged. This separate workspace will become the place to schedule completed posts.</p>
+      <p class="scheduler-message" id="schedulerMessage" role="status"></p>
+
+      <section class="scheduler-screen active" id="dashboardScreen">
+        <label class="field-label" for="schedulerAccount">Instagram page</label>
+        <select class="master-select" id="schedulerAccount">
+          <option value="pawsitive_husky">Pawsitive.husky</option>
+          <option value="corporate_donkey">The.corporate.donkey</option>
+          <option value="mooing_aunty">The.mooing.aunty</option>
+        </select>
+
+        <div class="screen-heading">
+          <h2>Scheduled posts</h2>
+          <span class="post-count" id="scheduledCount">0</span>
+        </div>
+        <div class="post-list" id="scheduledList"></div>
+        <div class="empty-state" id="scheduledEmpty">
+          <span aria-hidden="true">◷</span>
+          <h3>No scheduled posts</h3>
+          <p>Schedule your next batch of content when you are ready.</p>
+        </div>
+        <button class="sticky-action" id="openScheduleButton" type="button">Schedule Content</button>
       </section>
 
-      <section class="setup-card" aria-labelledby="connection-title">
-        <div>
-          <p class="eyebrow">STEP 1 OF 4</p>
-          <h2 id="connection-title">Connect Instagram</h2>
-          <p>Instagram has not been connected yet. We will add the secure Meta connection after the scheduling queue is ready.</p>
+      <section class="scheduler-screen" id="planScreen">
+        <div class="screen-heading with-back">
+          <button class="text-back" type="button" data-action="dashboard">← Back</button>
+          <h2>Schedule posts</h2>
         </div>
-        <span class="status-chip">Not connected</span>
+        <p class="screen-help">Choose the days and times for this content batch. All times use IST.</p>
+        <div class="date-range">
+          <label>From<input id="fromDate" type="date"></label>
+          <label>To<input id="toDate" type="date"></label>
+        </div>
+        <p class="validation-message" id="dateMessage"></p>
+        <div class="time-days" id="timeDays">
+          <div class="empty-state compact"><h3>Select From and To to continue</h3></div>
+        </div>
+        <button class="sticky-action" id="reviewButton" type="button" disabled>Next</button>
       </section>
 
-      <section class="draft-card" aria-labelledby="draft-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">QUEUE BUILDER</p>
-            <h2 id="draft-title">Create a scheduling draft</h2>
-          </div>
-          <span class="draft-badge">Local draft only</span>
+      <section class="scheduler-screen" id="reviewScreen">
+        <div class="screen-heading with-back">
+          <button class="text-back" type="button" data-action="plan">← Back</button>
+          <h2>Review queue</h2>
         </div>
-        <p class="form-note">This is a safe test queue. It stays in this browser and will not publish anything to Instagram.</p>
-        <form id="scheduleForm" class="schedule-form">
-          <label>
-            Content type
-            <select id="draftAccount" required>
-              <option value="pawsitive_husky">Pawsitive husky</option>
-              <option value="corporate_donkey">The corporate donkey</option>
-              <option value="mooing_aunty">The mooing aunty</option>
-            </select>
-          </label>
-          <label>
-            Scheduled date and time
-            <input id="draftScheduledAt" type="datetime-local" required>
-          </label>
-          <label class="full-width">
-            Caption
-            <textarea id="draftCaption" rows="4" placeholder="Enter a caption for this test draft"></textarea>
-          </label>
-          <label class="full-width">
-            Hashtags
-            <textarea id="draftHashtags" rows="2" placeholder="#hashtag1 #hashtag2"></textarea>
-          </label>
-          <button class="save-draft-button" type="submit">Add test draft</button>
-        </form>
-      </section>
-
-      <section class="queue-card" aria-labelledby="queue-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">UPCOMING POSTS</p>
-            <h2 id="queue-title">Scheduled queue</h2>
-          </div>
-          <span class="queue-count" id="queueCount">0 posts</span>
-        </div>
-        <div class="empty-queue" id="emptyQueue">
-          <div class="empty-icon" aria-hidden="true">◷</div>
-          <h3>No posts scheduled yet</h3>
-          <p>Once scheduling is connected to the generator, your planned posts will appear here.</p>
-        </div>
-        <div class="scheduled-list" id="scheduledList" aria-live="polite"></div>
-      </section>
-
-      <section class="roadmap-card" aria-labelledby="next-title">
-        <p class="eyebrow">NEXT</p>
-        <h2 id="next-title">What we will add next</h2>
-        <ol>
-          <li>Schedule a generated image with a date and time.</li>
-          <li>Save the post, caption, and hashtags securely in the cloud.</li>
-          <li>Connect your professional Instagram account through Meta.</li>
-          <li>Publish due posts automatically, even while this app is closed.</li>
-        </ol>
+        <p class="screen-help">Review the planned post order before adding it to the scheduler.</p>
+        <div class="post-list" id="reviewList"></div>
+        <button class="sticky-action" id="addToScheduleButton" type="button">Add to schedule</button>
       </section>
     </main>
 
+    <div class="action-sheet" id="actionSheet" hidden>
+      <button type="button" data-action="edit">Edit post</button>
+      <button type="button" data-action="skip-caption">Skip caption</button>
+      <button type="button" data-action="skip-pose">Skip pose</button>
+      <button class="danger" type="button" data-action="delete">Delete</button>
+      <button class="cancel" type="button" data-action="close-menu">Cancel</button>
+    </div>
+    <div class="modal" id="editModal" hidden>
+      <form class="modal-card" id="editForm">
+        <div class="modal-heading"><h2 id="editTitle">Edit post</h2><button type="button" data-action="close-edit" aria-label="Close">×</button></div>
+        <label id="editDateField" hidden>Scheduled date and time (IST)<input id="editScheduledAt" type="datetime-local"></label>
+        <div id="editPostFields">
+          <label>Caption<textarea id="editCaption" rows="4"></textarea></label>
+          <label>Hashtags<textarea id="editHashtags" rows="3"></textarea></label>
+          <label>Pose<select id="editPose"></select></label>
+          <label id="editBackgroundField">Background<select id="editBackground"></select></label>
+        </div>
+        <button class="primary-button" id="editSaveButton" type="submit">Save changes</button>
+      </form>
+    </div>
     <script type="module" src="scheduler.js"></script>
   </body>
 </html>

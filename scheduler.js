@@ -1,85 +1,66 @@
-// This local-only queue lets us finish and test the scheduling interface safely.
-// It will move to secure cloud storage before Instagram publishing is enabled.
-const DRAFTS_KEY = "instagram_generator_scheduler_drafts_v1";
-const form = document.querySelector("#scheduleForm");
-const account = document.querySelector("#draftAccount");
-const scheduledAt = document.querySelector("#draftScheduledAt");
-const caption = document.querySelector("#draftCaption");
-const hashtags = document.querySelector("#draftHashtags");
-const queueCount = document.querySelector("#queueCount");
-const emptyQueue = document.querySelector("#emptyQueue");
-const scheduledList = document.querySelector("#scheduledList");
+import { Storage } from "./storage.js";
 
-function getDrafts() {
-  try {
-    return JSON.parse(localStorage.getItem(DRAFTS_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
+const SCHEDULES_KEY = "instagram_generator_schedules_v1";
+const ACCOUNT_CONFIG = {
+  pawsitive_husky: { label: "Pawsitive.husky", generatorKey: "pawsitive", poses: "huskies", defaultPose: "assets/huskies/Pose 1.png", defaultBackground: "assets/backgrounds/Red.jpg", backgrounds: ["assets/backgrounds/Yellow.jpg", "assets/backgrounds/Green.jpg", "assets/backgrounds/Blue.jpg", "assets/backgrounds/Red.jpg"], hashtagGroups: [["husky", 1], ["yoga", 1], ["therapy", 1], ["darkjokes", 1], ["generic", 1]] },
+  corporate_donkey: { label: "The.corporate.donkey", generatorKey: "donkey", poses: "donkeys", defaultPose: "assets/donkey/Pose 1.png", defaultBackground: "assets/backgrounds/Corporate.jpg", hashtagGroups: [["office", 2], ["corporate", 2], ["generic", 1]] },
+  mooing_aunty: { label: "The.mooing.aunty", generatorKey: "cow", poses: "cows", defaultPose: "assets/cow/Pose 1.png", defaultBackground: "assets/backgrounds/cowbg.jpg", hashtagGroups: [["relationships", 1], ["funnyquotes", 2], ["wisdom", 1], ["generic", 1]] }
+};
 
-function saveDrafts(drafts) {
-  localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
-}
+const dom = {
+  title: document.querySelector("#schedulerTitle"), message: document.querySelector("#schedulerMessage"), account: document.querySelector("#schedulerAccount"),
+  screens: [...document.querySelectorAll(".scheduler-screen")], scheduledList: document.querySelector("#scheduledList"), scheduledEmpty: document.querySelector("#scheduledEmpty"), scheduledCount: document.querySelector("#scheduledCount"),
+  openSchedule: document.querySelector("#openScheduleButton"), fromDate: document.querySelector("#fromDate"), toDate: document.querySelector("#toDate"), timeDays: document.querySelector("#timeDays"), dateMessage: document.querySelector("#dateMessage"), reviewButton: document.querySelector("#reviewButton"), reviewList: document.querySelector("#reviewList"), addToSchedule: document.querySelector("#addToScheduleButton"), actionSheet: document.querySelector("#actionSheet"), editModal: document.querySelector("#editModal"), editForm: document.querySelector("#editForm"), editTitle: document.querySelector("#editTitle"), editDateField: document.querySelector("#editDateField"), editScheduledAt: document.querySelector("#editScheduledAt"), editPostFields: document.querySelector("#editPostFields"), editSaveButton: document.querySelector("#editSaveButton"), editCaption: document.querySelector("#editCaption"), editHashtags: document.querySelector("#editHashtags"), editPose: document.querySelector("#editPose"), editBackground: document.querySelector("#editBackground"), editBackgroundField: document.querySelector("#editBackgroundField")
+};
 
-function accountLabel(value) {
-  return {
-    pawsitive_husky: "Pawsitive husky",
-    corporate_donkey: "The corporate donkey",
-    mooing_aunty: "The mooing aunty"
-  }[value] || value;
-}
+const state = { account: "pawsitive_husky", screen: "dashboard", captions: [], hashtags: [], manifest: null, times: {}, review: [], selectedPostId: null, menuContext: null, editingPostId: null, editMode: null };
 
-function formatScheduledTime(value) {
-  return new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(new Date(value));
-}
+function schedules() { try { return JSON.parse(localStorage.getItem(SCHEDULES_KEY)) || []; } catch { return []; } }
+function saveSchedules(items) { localStorage.setItem(SCHEDULES_KEY, JSON.stringify(items)); }
+function config() { return ACCOUNT_CONFIG[state.account]; }
+function escapeHTML(value = "") { const node = document.createElement("div"); node.textContent = value; return node.innerHTML; }
+function localDate(value) { return new Date(`${value}T00:00:00`); }
+function formatDateTime(value) { return new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "2-digit", month: "short", year: "numeric", hour12: true, timeZone: "Asia/Kolkata" }).format(new Date(value)).replace(/\b(am|pm)\b/gi, (match) => match.toUpperCase()); }
+function formatDate(value) { return new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "2-digit", month: "short", year: "numeric" }).format(localDate(value)); }
+function availableCaptions() { const reserved = new Set(schedules().filter((item) => item.account === state.account && item.status === "scheduled").map((item) => item.captionId)); return state.captions.filter((item) => item.account === state.account && (item.status || "unused") === "unused" && !reserved.has(item.id)).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); }
+function datesInRange() { if (!dom.fromDate.value || !dom.toDate.value || dom.toDate.value < dom.fromDate.value) return []; const days = []; for (let date = localDate(dom.fromDate.value); date <= localDate(dom.toDate.value); date.setDate(date.getDate() + 1)) days.push(date.toISOString().slice(0, 10)); return days; }
+function slots() { return datesInRange().flatMap((date) => (state.times[date] || []).map((time) => ({ date, time, scheduledAt: new Date(`${date}T${time}:00+05:30`).toISOString() }))).sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)); }
 
-function renderDrafts() {
-  const drafts = getDrafts().sort((first, second) => new Date(first.scheduledAt) - new Date(second.scheduledAt));
-  queueCount.textContent = `${drafts.length} ${drafts.length === 1 ? "post" : "posts"}`;
-  emptyQueue.hidden = drafts.length > 0;
-  scheduledList.innerHTML = drafts.map((draft) => `
-    <article class="scheduled-post">
-      <div>
-        <span class="post-status">Local draft</span>
-        <h3>${accountLabel(draft.account)}</h3>
-        <p class="scheduled-time">${formatScheduledTime(draft.scheduledAt)}</p>
-        ${draft.caption ? `<p class="post-caption"></p>` : ""}
-      </div>
-      <button class="remove-draft-button" type="button" data-draft-id="${draft.id}">Remove</button>
-    </article>
-  `).join("");
-  drafts.forEach((draft) => {
-    const text = scheduledList.querySelector(`[data-draft-id="${draft.id}"]`)?.closest(".scheduled-post")?.querySelector(".post-caption");
-    if (text) text.textContent = draft.caption;
-  });
-}
+function showScreen(name) { state.screen = name; dom.screens.forEach((screen) => screen.classList.toggle("active", screen.id === `${name}Screen`)); dom.title.textContent = name === "dashboard" ? "Scheduler" : name === "plan" ? "Schedule posts" : "Review queue"; if (name === "dashboard") renderDashboard(); }
+function setMessage(message = "", error = false) { dom.message.textContent = message; dom.message.classList.toggle("error", error); }
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const drafts = getDrafts();
-  drafts.push({
-    id: crypto.randomUUID(),
-    account: account.value,
-    scheduledAt: new Date(scheduledAt.value).toISOString(),
-    caption: caption.value.trim(),
-    hashtags: hashtags.value.trim(),
-    status: "draft",
-    createdAt: Date.now()
-  });
-  saveDrafts(drafts);
-  form.reset();
-  renderDrafts();
-});
+function thumbnail(post) { return `<div class="post-thumbnail" style="background-image:url('${post.background}')"><img src="${post.pose}" alt=""></div>`; }
+function postCard(post, review = false) { return `<article class="post-card" data-post-id="${post.id}"><div class="post-date">${formatDateTime(post.scheduledAt)}</div><button class="more-button" type="button" data-more="${post.id}" data-more-context="${review ? "review" : "scheduled"}" aria-label="More options">⋮</button><div class="post-content">${thumbnail(post)}<p class="post-caption">${escapeHTML(post.caption)}</p></div><p class="post-hashtags">${escapeHTML(post.hashtags)}</p>${review ? '<span class="review-label">Review before scheduling</span>' : '<span class="scheduled-label">Scheduled</span>'}</article>`; }
+function renderDashboard() { const items = schedules().filter((item) => item.account === state.account && item.status === "scheduled").sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)); dom.scheduledList.innerHTML = items.map((item) => postCard(item)).join(""); dom.scheduledEmpty.hidden = items.length > 0; dom.scheduledCount.textContent = String(items.length); }
 
-scheduledList.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-draft-id]");
-  if (!button) return;
-  saveDrafts(getDrafts().filter((draft) => draft.id !== button.dataset.draftId));
-  renderDrafts();
-});
+function renderDays() { const dates = datesInRange(); if (!dates.length) { dom.timeDays.innerHTML = '<div class="empty-state compact"><h3>Select From and To to continue</h3></div>'; updateReviewButton(); return; } dom.timeDays.innerHTML = dates.map((date) => `<section class="time-day"><h3>${formatDate(date)}</h3><div class="time-chips">${(state.times[date] || []).map((time) => `<span>${new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(`2000-01-01T${time}:00`))}<button type="button" data-remove-time="${date}|${time}" aria-label="Remove time">×</button></span>`).join("")}</div><div class="add-time"><input type="time" data-time-input="${date}"><button type="button" data-add-time="${date}">＋ Add time</button></div></section>`).join(""); updateReviewButton(); }
+function updateReviewButton() { const count = slots().length; const available = availableCaptions().length; dom.reviewButton.disabled = count === 0 || available < count; dom.dateMessage.textContent = count && available < count ? `You need ${count - available} more unused caption${count - available === 1 ? "" : "s"} to create this schedule.` : count ? `${count} post${count === 1 ? "" : "s"} will be created. ${available} unused captions available.` : ""; }
+function shuffled(items) { return [...items].sort(() => Math.random() - 0.5); }
+function hashtagsForAccount() { return config().hashtagGroups.flatMap(([group, count]) => shuffled(state.hashtags.filter((item) => item.account === state.account && item.group === group)).slice(0, count).map((item) => `#${item.text}`)).join(" "); }
+function generatorState() { try { return JSON.parse(localStorage.getItem("instagram_generator_account_states"))?.[config().generatorKey] || {}; } catch { return {}; } }
+function buildReview() { const postSlots = slots(); const captions = availableCaptions(); if (captions.length < postSlots.length || !state.manifest) return; const saved = generatorState(); const poses = state.manifest[config().poses]; const poseStart = Math.max(0, poses.indexOf(saved.husky)); const backgrounds = config().backgrounds || [config().defaultBackground]; const backgroundStart = Math.max(0, backgrounds.indexOf(saved.background)); state.review = postSlots.map((slot, index) => ({ id: crypto.randomUUID(), ...slot, account: state.account, captionId: captions[index].id, captionPosition: index, caption: captions[index].caption, hashtags: hashtagsForAccount(), poseIndex: (poseStart + index) % poses.length, pose: poses[(poseStart + index) % poses.length], background: backgrounds[(backgroundStart + index) % backgrounds.length], status: "review" })); renderReview(); showScreen("review"); }
+function renderReview() { dom.reviewList.innerHTML = state.review.map((post) => postCard(post, true)).join(""); dom.addToSchedule.disabled = state.review.length === 0; }
 
-renderDrafts();
+function openMenu(id, context) { state.selectedPostId = id; state.menuContext = context; dom.actionSheet.innerHTML = context === "review" ? '<button type="button" data-action="edit">Edit post</button><button type="button" data-action="skip-caption">Skip caption</button><button type="button" data-action="skip-pose">Skip pose</button><button class="danger" type="button" data-action="delete">Delete</button><button class="cancel" type="button" data-action="close-menu">Cancel</button>' : '<button type="button" data-action="reschedule">Adjust date and time</button><button class="danger" type="button" data-action="delete">Delete schedule</button><button class="cancel" type="button" data-action="close-menu">Cancel</button>'; dom.actionSheet.hidden = false; }
+function closeMenu() { state.selectedPostId = null; state.menuContext = null; dom.actionSheet.hidden = true; }
+function currentReviewPost() { return state.review.find((post) => post.id === state.selectedPostId); }
+function shiftCaption() { const start = state.review.findIndex((post) => post.id === state.selectedPostId); const pool = availableCaptions(); if (start < 0 || !pool[state.review[state.review.length - 1].captionPosition + 1]) { setMessage("There is no next unused caption available.", true); return; } state.review.slice(start).forEach((post) => { post.captionPosition += 1; post.captionId = pool[post.captionPosition].id; post.caption = pool[post.captionPosition].caption; }); closeMenu(); renderReview(); }
+function shiftPose() { const start = state.review.findIndex((post) => post.id === state.selectedPostId); const poses = state.manifest[config().poses]; if (start < 0) return; state.review.slice(start).forEach((post) => { post.poseIndex = (post.poseIndex + 1) % poses.length; post.pose = poses[post.poseIndex]; }); closeMenu(); renderReview(); }
+function openEdit() { const post = currentReviewPost(); if (!post) return; state.editMode = "post"; state.editingPostId = post.id; const poses = state.manifest[config().poses]; dom.editTitle.textContent = "Edit post"; dom.editDateField.hidden = true; dom.editPostFields.hidden = false; dom.editSaveButton.textContent = "Save changes"; dom.editCaption.value = post.caption; dom.editHashtags.value = post.hashtags; dom.editPose.innerHTML = poses.map((pose, index) => `<option value="${index}" ${post.pose === pose ? "selected" : ""}>Pose ${index + 1}</option>`).join(""); const backgrounds = config().backgrounds || []; dom.editBackgroundField.hidden = !backgrounds.length; dom.editBackground.innerHTML = backgrounds.map((background) => `<option value="${background}" ${post.background === background ? "selected" : ""}>${background.split("/").pop().replace(/\..+$/, "")}</option>`).join(""); closeMenu(); dom.editModal.hidden = false; }
+function openReschedule() { const post = schedules().find((item) => item.id === state.selectedPostId); if (!post) return; state.editMode = "schedule"; state.editingPostId = post.id; dom.editTitle.textContent = "Adjust date and time"; dom.editDateField.hidden = false; dom.editPostFields.hidden = true; dom.editSaveButton.textContent = "Save schedule"; dom.editScheduledAt.value = new Date(post.scheduledAt).toLocaleString("sv-SE", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(" ", "T"); closeMenu(); dom.editModal.hidden = false; }
+function closeEdit() { state.editingPostId = null; state.editMode = null; dom.editModal.hidden = true; }
+
+dom.account.addEventListener("change", () => { state.account = dom.account.value; state.times = {}; state.review = []; renderDashboard(); });
+dom.openSchedule.addEventListener("click", () => showScreen("plan"));
+[dom.fromDate, dom.toDate].forEach((input) => input.addEventListener("change", renderDays));
+dom.timeDays.addEventListener("click", (event) => { const add = event.target.closest("[data-add-time]"); const remove = event.target.closest("[data-remove-time]"); if (add) { const date = add.dataset.addTime; const input = dom.timeDays.querySelector(`[data-time-input="${date}"]`); if (!input.value) return; state.times[date] = [...new Set([...(state.times[date] || []), input.value])].sort(); renderDays(); } if (remove) { const [date, time] = remove.dataset.removeTime.split("|"); state.times[date] = (state.times[date] || []).filter((item) => item !== time); renderDays(); } });
+dom.reviewButton.addEventListener("click", buildReview);
+document.addEventListener("click", (event) => { const destination = event.target.closest("[data-action='dashboard'], [data-action='plan']"); if (destination) showScreen(destination.dataset.action); const more = event.target.closest("[data-more]"); if (more) openMenu(more.dataset.more, more.dataset.moreContext); });
+dom.actionSheet.addEventListener("click", (event) => { const action = event.target.dataset.action; if (!action) return; if (action === "close-menu") closeMenu(); if (action === "skip-caption") shiftCaption(); if (action === "skip-pose") shiftPose(); if (action === "edit") openEdit(); if (action === "reschedule") openReschedule(); if (action === "delete") { if (state.menuContext === "scheduled") saveSchedules(schedules().filter((post) => post.id !== state.selectedPostId)); else state.review = state.review.filter((post) => post.id !== state.selectedPostId); const context = state.menuContext; closeMenu(); if (context === "scheduled") renderDashboard(); else renderReview(); } });
+dom.editForm.addEventListener("submit", (event) => { event.preventDefault(); if (state.editMode === "schedule") { const items = schedules(); const post = items.find((item) => item.id === state.editingPostId); if (post && dom.editScheduledAt.value) post.scheduledAt = new Date(`${dom.editScheduledAt.value}:00+05:30`).toISOString(); saveSchedules(items); closeEdit(); renderDashboard(); return; } const post = state.review.find((item) => item.id === state.editingPostId); if (!post) return; const poses = state.manifest[config().poses]; post.caption = dom.editCaption.value.trim(); post.hashtags = dom.editHashtags.value.trim(); post.poseIndex = Number(dom.editPose.value); post.pose = poses[post.poseIndex]; if (config().backgrounds) post.background = dom.editBackground.value; closeEdit(); renderReview(); });
+dom.editModal.addEventListener("click", (event) => { if (event.target === dom.editModal || event.target.closest("[data-action='close-edit']")) closeEdit(); });
+dom.addToSchedule.addEventListener("click", () => { if (!state.review.length) return; const items = schedules(); items.push(...state.review.map((post) => ({ ...post, status: "scheduled", createdAt: Date.now() }))); saveSchedules(items); state.review = []; state.times = {}; showScreen("dashboard"); setMessage("Posts added to this device’s schedule. Cloud publishing will be connected next."); });
+
+async function init() { try { state.manifest = await fetch("assets/manifest.json").then((response) => response.json()); await Storage.subscribe((captions) => { state.captions = captions; updateReviewButton(); }, () => setMessage("Captions could not connect to Firebase. Check Firebase Authentication for this local address.", true)); await Storage.subscribeHashtags((hashtags) => { state.hashtags = hashtags; }, () => setMessage("Hashtags could not connect to Firebase. Check Firebase Authentication for this local address.", true)); } catch (error) { console.error(error); setMessage("Scheduler is in local preview mode until Firebase reconnects.", true); } renderDashboard(); }
+
+init();
