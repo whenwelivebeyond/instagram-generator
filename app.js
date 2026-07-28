@@ -474,7 +474,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.store.onChange(() => {
         this.renderSavedCaptionOptions();
         if (this.shouldPrefillInitialCaption) {
-          this.prefillInitialSavedCaption();
+          this.prefillFirstSavedCaption();
           this.shouldPrefillInitialCaption = false;
         }
         this.renderCaptionTable();
@@ -529,6 +529,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.renderBackgroundChoices();
       this.renderHuskyChoices();
       this.renderSavedCaptionOptions();
+      this.prefillFirstSavedCaption();
       this.syncGeneratorControls();
       this.renderPreview();
       this.preloadGeneratorHashtags();
@@ -864,7 +865,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       }
     }
 
-    prefillInitialSavedCaption() {
+    prefillFirstSavedCaption() {
       const firstCaption = this.store.list(this.config.accountKey)
         .filter((caption) => (caption.status || "unused") === "unused")
         .sort((first, second) => this.captionTime(first) - this.captionTime(second))[0];
