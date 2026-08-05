@@ -8,15 +8,6 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
   const LEGACY_MIGRATION_KEY = "instagram_caption_center_firestore_migrated";
   const GENERATOR_STATE_KEY = "instagram_generator_account_states";
   const LAST_GENERATOR_KEY = "instagram_generator_last_account";
-  const HUSKY_BACKGROUND_CYCLE = [
-    "assets/backgrounds/Red.jpg",
-    "assets/backgrounds/Yellow.jpg",
-    "assets/backgrounds/Green.jpg",
-    "assets/backgrounds/Blue.jpg"
-  ];
-  const YELLOW_BACKGROUND = "assets/backgrounds/Yellow.jpg";
-  const BLACK_TEXT = "#252525";
-  const WHITE_TEXT = "#FFFFFF";
   const ACCOUNT_LABELS = {
     pawsitive_husky: "Pawsitive.husky",
     corporate_donkey: "The.corporate.donkey",
@@ -45,11 +36,12 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       title: "Pawsitive.husky",
       accountKey: "pawsitive_husky",
       defaultCaption: "",
-      defaultBackground: "assets/backgrounds/Red.jpg",
+      defaultBackground: "assets/backgrounds/huskybg.jpg",
       defaultHusky: "assets/huskies/Pose 1.png",
       poseSet: "huskies",
-      allowBackgroundChoice: true,
-      allowTextColorChoice: true,
+      allowBackgroundChoice: false,
+      allowTextColorChoice: false,
+      textColor: "#794D00",
       layout: {
         caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 60, minFontSize: 60, lineHeight: 90 },
         artBox: { x: 78, y: 798, width: 924, height: 822 },
@@ -441,6 +433,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         hashtagsInput: document.querySelector("#hashtagsInput"),
         resetCaptionButton: document.querySelector("#resetCaptionButton"),
         savedCaptionSelect: document.querySelector("#savedCaptionSelect"),
+        randomizeCaptionButton: document.querySelector("#randomizeCaptionButton"),
         alignmentButtons: document.querySelector("#alignmentButtons"),
         textColorButtons: document.querySelector("#textColorButtons"),
         textColorControl: document.querySelector("#textColorControl"),
@@ -627,6 +620,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         this.selectedSavedCaptionId = caption.id;
         this.setState({ caption: caption.caption });
       });
+      this.dom.randomizeCaptionButton.addEventListener("click", () => this.randomizeSavedCaption());
       this.dom.resetCaptionButton.addEventListener("click", () => this.resetGeneratorCaption());
       this.dom.textColorButtons.addEventListener("click", (event) => {
         const button = event.target.closest("[data-color]");
@@ -873,6 +867,18 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.selectedSavedCaptionId = firstCaption.id;
       this.dom.savedCaptionSelect.value = firstCaption.id;
       this.setState({ caption: firstCaption.caption });
+    }
+
+    randomizeSavedCaption() {
+      const captions = this.store.list(this.config.accountKey)
+        .filter((caption) => (caption.status || "unused") === "unused");
+      if (!captions.length) return;
+      const alternatives = captions.filter((caption) => caption.id !== this.selectedSavedCaptionId);
+      const pool = alternatives.length ? alternatives : captions;
+      const caption = pool[Math.floor(Math.random() * pool.length)];
+      this.selectedSavedCaptionId = caption.id;
+      this.dom.savedCaptionSelect.value = caption.id;
+      this.setState({ caption: caption.caption });
     }
 
     renderCaptionTable() {
@@ -1259,12 +1265,6 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       const nextCaption = usedCaptionId ? this.nextUnusedCaption(usedCaptionId) : null;
       this.selectedSavedCaptionId = nextCaption?.id || null;
       const patch = { caption: nextCaption?.caption || "", husky: nextPose };
-
-      if (this.config === GENERATORS.pawsitive) {
-        const nextBackground = this.nextItem(HUSKY_BACKGROUND_CYCLE, this.state.background);
-        patch.background = nextBackground;
-        patch.textColor = nextBackground === YELLOW_BACKGROUND ? BLACK_TEXT : WHITE_TEXT;
-      }
 
       this.setState(patch);
       this.renderSavedCaptionOptions();

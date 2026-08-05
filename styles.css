@@ -208,6 +208,20 @@ button {
   justify-content: space-between;
 }
 
+.caption-randomize-button {
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: #252525;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.caption-randomize-button:hover {
+  color: #174ea6;
+}
+
 .label-icon-button,
 .toolbar-button,
 .row-delete-button,

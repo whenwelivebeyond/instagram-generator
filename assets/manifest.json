@@ -1,9 +1,6 @@
 {
   "backgrounds": [
-    "assets/backgrounds/Red.jpg",
-    "assets/backgrounds/Yellow.jpg",
-    "assets/backgrounds/Green.jpg",
-    "assets/backgrounds/Blue.jpg"
+    "assets/backgrounds/huskybg.jpg"
   ],
   "huskies": [
     "assets/huskies/Pose 1.png",
