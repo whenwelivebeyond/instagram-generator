@@ -80,6 +80,15 @@
                 <div class="segmented" id="alignmentButtons"></div>
               </div>
 
+              <div class="control-group compact">
+                <label>Font size</label>
+                <div class="font-size-control">
+                  <button id="decreaseFontSizeButton" type="button" aria-label="Decrease font size">−</button>
+                  <output id="fontSizeValue" aria-live="polite">60px</output>
+                  <button id="increaseFontSizeButton" type="button" aria-label="Increase font size">+</button>
+                </div>
+              </div>
+
               <div class="control-group compact" id="textColorControl">
                 <label>Text color</label>
                 <div class="swatches" id="textColorButtons">
@@ -136,7 +145,7 @@
                     <button class="toolbar-button" type="button" data-action="close-search" aria-label="Close search">×</button>
                   </div>
                 </div>
-                <div class="toolbar-menu">
+                <div class="toolbar-menu caption-filter-menu">
                   <button class="toolbar-button" type="button" data-action="toggle-filter" aria-label="Filter captions" title="Filter"><img src="assets/icons/Filter.svg" alt=""></button>
                   <div class="toolbar-popover" id="filterMenu">
                     <button type="button" data-filter="used">Used</button>
@@ -144,7 +153,7 @@
                     <button type="button" data-filter="all">All</button>
                   </div>
                 </div>
-                <div class="toolbar-menu">
+                <div class="toolbar-menu caption-sort-menu">
                   <button class="toolbar-button" type="button" data-action="toggle-sort" aria-label="Sort captions" title="Sort"><img src="assets/icons/Sort.svg" alt=""></button>
                   <div class="toolbar-popover" id="sortMenu">
                     <button type="button" data-sort="default">Default</button>
@@ -152,6 +161,7 @@
                     <button type="button" data-sort="earliest">Earliest</button>
                   </div>
                 </div>
+                <button class="caption-export-button" type="button" data-action="download-csv">Download CSV</button>
                 <div class="management-toolbar" id="managementToolbar">
                   <button class="toolbar-button" type="button" data-action="undo" aria-label="Undo" title="Undo"><img src="assets/icons/Undo.svg" alt=""></button>
                   <button class="toolbar-button" type="button" data-action="redo" aria-label="Redo" title="Redo"><img src="assets/icons/Redo.svg" alt=""></button>

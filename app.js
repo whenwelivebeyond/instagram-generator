@@ -8,6 +8,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
   const LEGACY_MIGRATION_KEY = "instagram_caption_center_firestore_migrated";
   const GENERATOR_STATE_KEY = "instagram_generator_account_states";
   const LAST_GENERATOR_KEY = "instagram_generator_last_account";
+  const MIN_CAPTION_FONT_SIZE = 30;
+  const MAX_CAPTION_FONT_SIZE = 90;
   const ACCOUNT_LABELS = {
     pawsitive_husky: "Pawsitive.husky",
     corporate_donkey: "The.corporate.donkey",
@@ -238,14 +240,14 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     async loadFonts() {
-      if (!this.manifest.fonts?.patrickHandSc || !("FontFace" in window)) return;
-      const patrickHand = new FontFace("Patrick Hand SC", `url("${this.manifest.fonts.patrickHandSc}")`, {
+      if (!this.manifest.fonts?.patrickHand || !("FontFace" in window)) return;
+      const patrickHand = new FontFace("Patrick Hand", `url("${this.manifest.fonts.patrickHand}")`, {
         style: "normal",
         weight: "400"
       });
       const loaded = await patrickHand.load();
       document.fonts.add(loaded);
-      await document.fonts.load('75px "Patrick Hand SC"');
+      await document.fonts.load('75px "Patrick Hand"');
     }
 
     image(path) {
@@ -279,7 +281,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       ]);
 
       ctx.drawImage(background, 0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
-      this.drawCaption(state.caption, state.alignment, state.textColor);
+      this.drawCaption(state.caption, state.alignment, state.textColor, state.fontSize);
       this.drawArtwork(husky);
     }
 
@@ -319,33 +321,29 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       };
     }
 
-    drawCaption(caption, alignment, color) {
+    drawCaption(caption, alignment, color, fontSize) {
       if (!caption.trim()) return;
-      const { x, y, leftX, rightX, maxWidth, fontSize, minFontSize, lineHeight } = this.config.layout.caption;
+      const { x, y, leftX, rightX, maxWidth, fontSize: defaultFontSize, lineHeight } = this.config.layout.caption;
       const ctx = this.ctx;
       ctx.save();
       ctx.fillStyle = color;
       ctx.textAlign = alignment;
       ctx.textBaseline = "middle";
-      let activeFontSize = fontSize;
+      const activeFontSize = fontSize || defaultFontSize;
       let lines = this.explicitLines(caption);
       this.setCaptionFont(activeFontSize);
-      while (activeFontSize > minFontSize && this.widestLine(lines) > maxWidth) {
-        activeFontSize -= 1;
-        this.setCaptionFont(activeFontSize);
-      }
       if (this.widestLine(lines) > maxWidth) {
         lines = this.wrapLines(caption, maxWidth);
       }
       const alignX = alignment === "left" ? leftX : alignment === "right" ? rightX : x;
       lines.forEach((line, index) => {
-        ctx.fillText(line.toUpperCase(), alignX, y + index * lineHeight);
+        ctx.fillText(line, alignX, y + index * lineHeight);
       });
       ctx.restore();
     }
 
     setCaptionFont(size) {
-      this.ctx.font = `400 ${size}px "Patrick Hand SC", "Comic Sans MS", "Trebuchet MS", sans-serif`;
+      this.ctx.font = `400 ${size}px "Comic Sans MS", "Trebuchet MS", sans-serif`;
     }
 
     explicitLines(text) {
@@ -353,7 +351,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     widestLine(lines) {
-      return Math.max(...lines.map((line) => this.ctx.measureText(line.toUpperCase()).width), 0);
+      return Math.max(...lines.map((line) => this.ctx.measureText(line).width), 0);
     }
 
     wrapLines(text, maxWidth) {
@@ -365,7 +363,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         let current = "";
         words.forEach((word) => {
           const next = current ? `${current} ${word}` : word;
-          if (ctx.measureText(next.toUpperCase()).width <= maxWidth || !current) {
+          if (ctx.measureText(next).width <= maxWidth || !current) {
             current = next;
           } else {
             lines.push(current);
@@ -437,6 +435,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         alignmentButtons: document.querySelector("#alignmentButtons"),
         textColorButtons: document.querySelector("#textColorButtons"),
         textColorControl: document.querySelector("#textColorControl"),
+        decreaseFontSizeButton: document.querySelector("#decreaseFontSizeButton"),
+        increaseFontSizeButton: document.querySelector("#increaseFontSizeButton"),
+        fontSizeValue: document.querySelector("#fontSizeValue"),
         downloadButton: document.querySelector("#downloadButton"),
         captionAccountSelect: document.querySelector("#captionAccountSelect"),
         captionCenterInput: document.querySelector("#captionCenterInput"),
@@ -534,7 +535,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         husky: config.defaultHusky,
         caption: config.defaultCaption,
         alignment: "center",
-        textColor: config.textColor || "#FFFFFF"
+        textColor: config.textColor || "#FFFFFF",
+        fontSize: config.layout.caption.fontSize
       };
     }
 
@@ -564,7 +566,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         background: backgroundIsValid ? saved.background : config.defaultBackground,
         husky: poses.includes(saved.husky) ? saved.husky : config.defaultHusky,
         caption: "",
-        textColor: config.textColor || saved.textColor || "#FFFFFF"
+        textColor: config.textColor || saved.textColor || "#FFFFFF",
+        fontSize: Math.min(MAX_CAPTION_FONT_SIZE, Math.max(MIN_CAPTION_FONT_SIZE, Number(saved.fontSize) || config.layout.caption.fontSize))
       };
     }
 
@@ -626,6 +629,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         const button = event.target.closest("[data-color]");
         if (button) this.setState({ textColor: button.dataset.color });
       });
+      this.dom.decreaseFontSizeButton.addEventListener("click", () => this.changeFontSize(-1));
+      this.dom.increaseFontSizeButton.addEventListener("click", () => this.changeFontSize(1));
       this.dom.downloadButton.addEventListener("click", () => this.downloadPost());
       document.addEventListener("click", (event) => {
         if (!event.target.closest("#huskySelect")) this.dom.huskyOptions.classList.remove("open");
@@ -840,18 +845,29 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     renderSavedCaptionOptions() {
-      const captions = this.store.list(this.config.accountKey)
+      const allCaptions = this.store.list(this.config.accountKey)
         .filter((caption) => (caption.status || "unused") === "unused")
         // The generator works through the oldest saved captions first.
         // Caption Center keeps its own manually managed display order.
         .sort((first, second) => this.captionTime(first) - this.captionTime(second));
+      const captions = allCaptions.filter((caption) => !caption.restored)
+        .concat(allCaptions.filter((caption) => caption.restored));
       this.dom.savedCaptionSelect.innerHTML = '<option value="">Choose a saved caption</option>';
-      captions.forEach((caption, index) => {
+      const addOptions = (items, container, startIndex) => items.forEach((caption, index) => {
         const option = document.createElement("option");
         option.value = caption.id;
-        option.textContent = `${index + 1}. ${caption.caption.replace(/\s+/g, " ").slice(0, 70)}`;
-        this.dom.savedCaptionSelect.append(option);
+        option.textContent = `${startIndex + index + 1}. ${caption.caption.replace(/\s+/g, " ").slice(0, 70)}`;
+        container.append(option);
       });
+      const standardCaptions = captions.filter((caption) => !caption.restored);
+      const restoredCaptions = captions.filter((caption) => caption.restored);
+      addOptions(standardCaptions, this.dom.savedCaptionSelect, 0);
+      if (restoredCaptions.length) {
+        const restoredGroup = document.createElement("optgroup");
+        restoredGroup.label = "Restored";
+        addOptions(restoredCaptions, restoredGroup, standardCaptions.length);
+        this.dom.savedCaptionSelect.append(restoredGroup);
+      }
       if (this.selectedSavedCaptionId && captions.some((caption) => caption.id === this.selectedSavedCaptionId)) {
         this.dom.savedCaptionSelect.value = this.selectedSavedCaptionId;
       } else {
@@ -881,6 +897,11 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.setState({ caption: caption.caption });
     }
 
+    changeFontSize(amount) {
+      const fontSize = Math.min(MAX_CAPTION_FONT_SIZE, Math.max(MIN_CAPTION_FONT_SIZE, this.state.fontSize + amount));
+      if (fontSize !== this.state.fontSize) this.setState({ fontSize });
+    }
+
     renderCaptionTable() {
       const captions = this.visibleCaptions();
       const subtitle = this.captionView.filter === "used"
@@ -899,7 +920,14 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         this.renderCaptionPagination(0, 0);
         return;
       }
-      pageCaptions.forEach((caption) => {
+      pageCaptions.forEach((caption, index) => {
+        const previousCaption = captions[start + index - 1];
+        if (this.captionView.filter === "unused" && caption.restored && !previousCaption?.restored) {
+          const sectionRow = document.createElement("tr");
+          sectionRow.className = "restored-section";
+          sectionRow.innerHTML = '<td>Restored</td>';
+          this.dom.captionTableBody.append(sectionRow);
+        }
         const row = document.createElement("tr");
         row.dataset.captionId = caption.id;
         row.innerHTML = '<td class="caption-cell"></td>';
@@ -907,7 +935,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         if (this.captionView.management) {
           cell.innerHTML = `
             <span class="caption-text"></span>
-            <button class="row-move-button" type="button" data-action="move-top" aria-label="Move caption to top"><img src="${this.assets.manifest.icons.moveTop}" alt=""></button>
+            ${caption.status === "used" ? `<button class="row-restore-button" type="button" data-action="restore" aria-label="Restore caption to unused"><img src="${this.assets.manifest.icons.restore}" alt=""></button>` : ""}
             <button class="row-delete-button" type="button" data-action="delete-now" aria-label="Delete caption"><img src="${this.assets.manifest.icons.delete}" alt=""></button>
           `;
           cell.querySelector(".caption-text").textContent = caption.caption;
@@ -938,9 +966,15 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     visibleCaptions() {
       const accountKey = this.dom.captionAccountSelect.value;
       let captions = this.store.list(accountKey);
-      if (this.captionView.management && this.captionView.order.length) {
-        const position = new Map(this.captionView.order.map((id, index) => [id, index]));
-        captions.sort((first, second) => (position.get(first.id) ?? Infinity) - (position.get(second.id) ?? Infinity));
+      if (this.captionView.filter !== "all") captions = captions.filter((caption) => (caption.status || "unused") === this.captionView.filter);
+      const query = this.captionView.query.trim().toLowerCase();
+      if (query) captions = captions.filter((caption) => caption.caption.toLowerCase().includes(query));
+      if (this.captionView.management) {
+        if (this.captionView.filter === "used") {
+          captions.sort((first, second) => this.captionUsedTime(second) - this.captionUsedTime(first));
+        } else {
+          captions.sort((first, second) => (second.createdAt || 0) - (first.createdAt || 0));
+        }
       } else if (this.captionView.sort === "latest") {
         captions.sort((first, second) => this.captionTime(second) - this.captionTime(first));
       } else if (this.captionView.sort === "earliest") {
@@ -948,14 +982,18 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       } else {
         captions.sort((first, second) => this.captionOrder(first) - this.captionOrder(second));
       }
-      if (this.captionView.filter !== "all") captions = captions.filter((caption) => (caption.status || "unused") === this.captionView.filter);
-      const query = this.captionView.query.trim().toLowerCase();
-      if (query) captions = captions.filter((caption) => caption.caption.toLowerCase().includes(query));
+      if (this.captionView.filter === "unused") {
+        captions = captions.filter((caption) => !caption.restored).concat(captions.filter((caption) => caption.restored));
+      }
       return captions;
     }
 
     captionTime(caption) {
       return caption.updatedAt || caption.createdAt || 0;
+    }
+
+    captionUsedTime(caption) {
+      return caption.usedAt || caption.updatedAt || caption.createdAt || 0;
     }
 
     captionOrder(caption) {
@@ -1013,6 +1051,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         this.toggleToolbarMenu(this.dom.filterMenu);
       } else if (action === "toggle-sort") {
         this.toggleToolbarMenu(this.dom.sortMenu);
+      } else if (action === "download-csv") {
+        this.downloadCaptionsCsv();
       } else if (action === "undo") {
         this.undoManagementChange();
       } else if (action === "redo") {
@@ -1040,14 +1080,12 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     enterManagementMode() {
       if (this.captionView.management) return;
-      this.captionView.filter = "all";
-      this.captionView.sort = "default";
       this.captionView.searchOpen = false;
       this.captionView.query = "";
       this.dom.captionSearchInput.value = "";
       this.captionView.management = true;
       this.captionView.page = 1;
-      this.captionView.order = this.visibleCaptions().map((caption) => caption.id);
+      this.captionView.order = [];
       this.captionView.history = [];
       this.captionView.redo = [];
       this.closeToolbarMenus();
@@ -1075,6 +1113,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         } else if (action.type === "delete") {
           await this.store.restore(action.caption);
           this.applyManagementOrder(action.orderBefore);
+        } else if (action.type === "restore") {
+          await this.store.update(action.id, action.before);
+          this.renderCaptionTable();
         }
         this.captionView.redo.push(action);
       } catch (error) {
@@ -1093,6 +1134,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         } else if (action.type === "delete") {
           await this.store.removeMany([action.caption.id]);
           this.applyManagementOrder(action.orderBefore.filter((id) => id !== action.caption.id));
+        } else if (action.type === "restore") {
+          await this.store.update(action.id, action.after);
+          this.renderCaptionTable();
         }
         this.captionView.history.push(action);
       } catch (error) {
@@ -1138,7 +1182,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         }
         if (this.captionView.management) {
           const id = row.dataset.captionId;
-          if (event.target.closest('[data-action="move-top"]')) await this.moveCaptionToTop(id);
+          if (event.target.closest('[data-action="restore"]')) await this.restoreCaption(id);
           if (event.target.closest('[data-action="delete-now"]')) await this.deleteCaptionNow(id);
           return;
         }
@@ -1164,6 +1208,52 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         console.error(error);
         this.setCaptionStorageStatus("Caption could not be moved. Check your Firebase setup.", true);
       }
+    }
+
+    async restoreCaption(id) {
+      const caption = this.store.list(this.dom.captionAccountSelect.value).find((item) => item.id === id);
+      if (!caption || caption.status !== "used") return;
+      const before = {
+        status: caption.status,
+        restored: Boolean(caption.restored),
+        restoredAt: caption.restoredAt || null
+      };
+      const after = { status: "unused", restored: true, restoredAt: Date.now() };
+      try {
+        await this.store.update(id, after);
+        this.addManagementHistory({ type: "restore", id, before, after });
+      } catch (error) {
+        console.error(error);
+        this.setCaptionStorageStatus("Caption could not be restored. Check your Firebase setup.", true);
+      }
+    }
+
+    downloadCaptionsCsv() {
+      const captions = this.visibleCaptions();
+      const account = this.dom.captionAccountSelect.value;
+      const escapeCsv = (value) => {
+        const text = String(value ?? "");
+        const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+        return `"${safeText.replace(/"/g, '""')}"`;
+      };
+      const rows = [
+        ["Caption", "Status", "Created at", "Last updated", "Used at", "Restored"],
+        ...captions.map((caption) => [
+          caption.caption,
+          caption.status || "unused",
+          caption.createdAt ? new Date(caption.createdAt).toLocaleString("en-IN") : "",
+          caption.updatedAt ? new Date(caption.updatedAt).toLocaleString("en-IN") : "",
+          caption.usedAt ? new Date(caption.usedAt).toLocaleString("en-IN") : "",
+          caption.restored ? "Yes" : "No"
+        ])
+      ];
+      const blob = new Blob([rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${account}-${this.captionView.filter}-captions.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      this.setCaptionStorageStatus(`${captions.length} caption${captions.length === 1 ? "" : "s"} downloaded as CSV.`);
     }
 
     async deleteCaptionNow(id) {
@@ -1249,10 +1339,11 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       const usedCaptionId = this.selectedSavedCaptionId;
       try {
         if (usedCaptionId) {
-          await this.store.update(usedCaptionId, { status: "used" });
+          await this.store.update(usedCaptionId, { status: "used", usedAt: Date.now() });
         } else {
           await this.store.add(this.config.accountKey, captionText, {
             status: "used",
+            usedAt: Date.now(),
             sortOrder: this.nextCaptionSortOrder(this.config.accountKey)
           });
         }
@@ -1298,6 +1389,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.dom.captionInput.value = this.state.caption;
       this.dom.accountSelect.value = Object.keys(GENERATORS).find((key) => GENERATORS[key] === this.config);
       this.dom.textColorControl.classList.toggle("is-hidden", !this.config.allowTextColorChoice);
+      this.dom.fontSizeValue.value = `${this.state.fontSize}px`;
+      this.dom.fontSizeValue.textContent = `${this.state.fontSize}px`;
+      this.dom.decreaseFontSizeButton.disabled = this.state.fontSize <= MIN_CAPTION_FONT_SIZE;
+      this.dom.increaseFontSizeButton.disabled = this.state.fontSize >= MAX_CAPTION_FONT_SIZE;
       this.dom.backgroundGrid.querySelectorAll(".background-option").forEach((button) => {
         button.classList.toggle("active", button.dataset.path === this.state.background);
       });
