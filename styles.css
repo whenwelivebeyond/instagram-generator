@@ -377,14 +377,16 @@ textarea {
 
 .control-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 110px;
+  align-items: end;
+  gap: 10px;
 }
 
 .font-size-control {
   display: grid;
-  grid-template-columns: 34px 1fr 34px;
-  min-height: 42px;
+  grid-template-columns: 30px 1fr 30px;
+  min-height: 44px;
+  height: 44px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -423,6 +425,11 @@ textarea {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+#alignmentButtons {
+  flex-wrap: nowrap;
+  gap: 4px;
 }
 
 .icon-button,
@@ -1049,7 +1056,11 @@ textarea {
   }
 
   .control-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) 110px;
+  }
+
+  #alignmentButtons .icon-button {
+    width: 44px;
   }
 
   .controls-panel,
