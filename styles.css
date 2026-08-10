@@ -592,6 +592,86 @@ textarea {
   margin: 0 auto;
 }
 
+.character-control-page {
+  display: grid;
+  gap: 14px;
+  width: min(680px, 100%);
+  margin: 0 auto;
+}
+
+.character-control-section {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.character-control-section summary {
+  min-height: 54px;
+  padding: 16px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.character-control-items {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.availability-toggle {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  min-height: 56px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.availability-toggle:last-child {
+  border-bottom: 0;
+}
+
+.availability-toggle input {
+  position: absolute;
+  opacity: 0;
+}
+
+.toggle-track {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: #98a2b3;
+  transition: background 160ms ease;
+}
+
+.toggle-track::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+  transition: transform 160ms ease;
+}
+
+.availability-toggle input:checked + .toggle-track {
+  background: #174ea6;
+}
+
+.availability-toggle input:checked + .toggle-track::after {
+  transform: translateX(20px);
+}
+
+.availability-toggle input:focus-visible + .toggle-track {
+  outline: 3px solid rgba(23, 78, 166, 0.3);
+  outline-offset: 3px;
+}
+
 .hashtag-account {
   overflow: hidden;
   border: 1px solid var(--border);

@@ -8,6 +8,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
   const LEGACY_MIGRATION_KEY = "instagram_caption_center_firestore_migrated";
   const GENERATOR_STATE_KEY = "instagram_generator_account_states";
   const LAST_GENERATOR_KEY = "instagram_generator_last_account";
+  const CHARACTER_AVAILABILITY_KEY = "instagram_generator_character_availability";
   const MIN_CAPTION_FONT_SIZE = 30;
   const MAX_CAPTION_FONT_SIZE = 90;
   const ACCOUNT_LABELS = {
@@ -393,6 +394,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.store = new CaptionStore();
       this.hashtagStore = new HashtagStore();
       this.generatorStates = this.readGeneratorStates();
+      this.characterAvailability = this.readCharacterAvailability();
       this.generatorKey = this.readLastGeneratorKey();
       this.config = GENERATORS[this.generatorKey];
       this.state = this.stateForGenerator(this.generatorKey);
@@ -460,6 +462,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         ,filterMenu: document.querySelector("#filterMenu")
         ,sortMenu: document.querySelector("#sortMenu")
         ,hashtagsPageContent: document.querySelector("#hashtagsPageContent")
+        ,characterControlPageContent: document.querySelector("#characterControlPageContent")
       };
     }
 
@@ -473,6 +476,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.bindGeneratorControls();
       this.bindCaptionCenter();
       this.bindHashtagPage();
+      this.bindCharacterControlPage();
       this.store.onChange(() => {
         this.renderSavedCaptionOptions();
         if (this.shouldPrefillInitialCaption) {
@@ -486,11 +490,12 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         this.preloadGeneratorHashtags();
       });
       this.dom.captionInput.value = this.state.caption;
-      this.dom.accountSelect.value = this.generatorKey;
+      this.renderGeneratorAccountOptions();
       this.renderSavedCaptionOptions();
       this.renderCaptionTable();
       this.syncGeneratorControls();
       this.renderHashtagPage();
+      this.renderCharacterControlPage();
       this.renderPreview();
       this.setCaptionStorageStatus("Loading saved captions…");
       try {
@@ -521,6 +526,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     selectGenerator(generatorKey) {
+      if (!this.characterAvailability.accounts[generatorKey]) return;
       this.saveGeneratorState();
       this.generatorKey = generatorKey;
       this.config = GENERATORS[generatorKey];
@@ -536,6 +542,26 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.syncGeneratorControls();
       this.renderPreview();
       this.preloadGeneratorHashtags();
+    }
+
+    renderGeneratorAccountOptions() {
+      const available = this.availableGeneratorKeys();
+      if (!available.length) {
+        this.dom.accountSelect.innerHTML = '<option value="">No character available</option>';
+        this.dom.accountSelect.disabled = true;
+        this.dom.downloadButton.disabled = true;
+        return;
+      }
+      if (!available.includes(this.generatorKey)) this.selectGenerator(available[0]);
+      this.dom.accountSelect.disabled = false;
+      this.dom.accountSelect.innerHTML = available.map((key) => `<option value="${key}">${GENERATORS[key].title.toLowerCase()}</option>`).join("");
+      this.dom.accountSelect.value = this.generatorKey;
+      this.updateGeneratorAvailability();
+    }
+
+    updateGeneratorAvailability() {
+      const corporateHasCharacters = this.generatorKey !== "donkey" || this.availableCorporateCharacters().length > 0;
+      this.dom.downloadButton.disabled = !this.characterAvailability.accounts[this.generatorKey] || !corporateHasCharacters;
     }
 
     defaultGeneratorState(config) {
@@ -557,6 +583,34 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       } catch {
         return {};
       }
+    }
+
+    readCharacterAvailability() {
+      const defaults = {
+        accounts: { pawsitive: true, donkey: true, cow: true },
+        corporateCharacters: { donkey: true, husky: true, chicken: true, gazelle: true, cat: true }
+      };
+      try {
+        const saved = JSON.parse(localStorage.getItem(CHARACTER_AVAILABILITY_KEY)) || {};
+        return {
+          accounts: { ...defaults.accounts, ...saved.accounts },
+          corporateCharacters: { ...defaults.corporateCharacters, ...saved.corporateCharacters }
+        };
+      } catch {
+        return defaults;
+      }
+    }
+
+    saveCharacterAvailability() {
+      localStorage.setItem(CHARACTER_AVAILABILITY_KEY, JSON.stringify(this.characterAvailability));
+    }
+
+    availableGeneratorKeys() {
+      return Object.keys(GENERATORS).filter((key) => this.characterAvailability.accounts[key]);
+    }
+
+    availableCorporateCharacters() {
+      return GENERATORS.donkey.characters.filter((character) => this.characterAvailability.corporateCharacters[character]);
     }
 
     readLastGeneratorKey() {
@@ -744,6 +798,64 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       });
     }
 
+    bindCharacterControlPage() {
+      this.dom.characterControlPageContent.addEventListener("change", (event) => {
+        const toggle = event.target.closest("[data-availability-group]");
+        if (!toggle) return;
+        this.characterAvailability[toggle.dataset.availabilityGroup][toggle.dataset.availabilityKey] = toggle.checked;
+        this.saveCharacterAvailability();
+        this.applyCharacterAvailability();
+      });
+    }
+
+    applyCharacterAvailability() {
+      const availableAccounts = this.availableGeneratorKeys();
+      if (availableAccounts.length && !availableAccounts.includes(this.generatorKey)) {
+        this.selectGenerator(availableAccounts[0]);
+      } else if (this.generatorKey === "donkey") {
+        const availableCharacters = this.availableCorporateCharacters();
+        if (availableCharacters.length && !availableCharacters.includes(this.state.character)) {
+          this.selectCharacter(availableCharacters[0]);
+        }
+      }
+      this.renderGeneratorAccountOptions();
+      this.renderCharacterControl();
+      this.renderHuskyChoices();
+      this.renderCharacterControlPage();
+    }
+
+    renderCharacterControlPage() {
+      const accountItems = [
+        ["pawsitive", "Pawsitive Husky"],
+        ["donkey", "Corporate Jungle"],
+        ["cow", "Mooing Aunty"]
+      ];
+      const corporateItems = [
+        ["donkey", "Donkey"],
+        ["husky", "Corporate Husky"],
+        ["chicken", "Chicken"],
+        ["gazelle", "Gazelle"],
+        ["cat", "Cat"]
+      ];
+      const renderItems = (items, group) => items.map(([key, label]) => `
+        <label class="availability-toggle">
+          <span>${label}</span>
+          <input type="checkbox" data-availability-group="${group}" data-availability-key="${key}" ${this.characterAvailability[group][key] ? "checked" : ""}>
+          <span class="toggle-track" aria-hidden="true"></span>
+        </label>
+      `).join("");
+      this.dom.characterControlPageContent.innerHTML = `
+        <details class="character-control-section" open>
+          <summary>Generator pages</summary>
+          <div class="character-control-items">${renderItems(accountItems, "accounts")}</div>
+        </details>
+        <details class="character-control-section" open>
+          <summary>Corporate Jungle characters</summary>
+          <div class="character-control-items">${renderItems(corporateItems, "corporateCharacters")}</div>
+        </details>
+      `;
+    }
+
     renderHashtagPage() {
       this.dom.hashtagsPageContent.innerHTML = Object.entries(HASHTAG_GROUPS).map(([account, config]) => {
         const isOpen = this.openHashtagAccounts.has(account);
@@ -831,11 +943,18 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       const hasCharacters = Boolean(this.config.characters);
       this.dom.characterControl.classList.toggle("is-hidden", !hasCharacters);
       this.dom.characterPoseRow.classList.toggle("character-hidden", !hasCharacters);
-      if (hasCharacters) this.dom.characterSelect.value = this.state.character;
+      if (!hasCharacters) return;
+      const characters = this.availableCorporateCharacters();
+      this.dom.characterSelect.disabled = !characters.length;
+      this.dom.characterSelect.innerHTML = characters.length
+        ? characters.map((character) => `<option value="${character}">${character === "husky" ? "Corporate Husky" : character[0].toUpperCase() + character.slice(1)}</option>`).join("")
+        : '<option value="">No character available</option>';
+      if (characters.includes(this.state.character)) this.dom.characterSelect.value = this.state.character;
+      this.updateGeneratorAvailability();
     }
 
     selectCharacter(character) {
-      if (!this.config.characters?.includes(character)) return;
+      if (!this.config.characters?.includes(character) || !this.characterAvailability.corporateCharacters[character]) return;
       const poses = this.posePaths(this.config, character);
       this.setState({
         character,
@@ -846,7 +965,11 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     renderHuskyChoices() {
       this.dom.huskyOptions.innerHTML = "";
-      this.posePaths().forEach((path) => {
+      const paths = this.config.characters && !this.characterAvailability.corporateCharacters[this.state.character]
+        ? []
+        : this.posePaths();
+      this.dom.huskyButton.disabled = !paths.length;
+      paths.forEach((path) => {
         const option = document.createElement("button");
         option.className = "image-option";
         option.type = "button";
@@ -1480,6 +1603,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     updateHuskyButton() {
       if (!this.dom.huskyButton) return;
+      if (this.dom.huskyButton.disabled || !this.state.husky) {
+        this.dom.huskyButton.innerHTML = "<span>No character available</span>";
+        return;
+      }
       const arrow = this.dom.huskyOptions.classList.contains("open")
         ? this.assets.manifest.icons.dropdownUp
         : this.assets.manifest.icons.dropdownDown;
