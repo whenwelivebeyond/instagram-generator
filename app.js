@@ -64,7 +64,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       defaultCharacter: "donkey",
       allowBackgroundChoice: false,
       allowTextColorChoice: false,
-      textColor: "#181818",
+      textColor: "#794D00",
       layout: {
         caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 60, minFontSize: 60, lineHeight: 90 },
         artBox: { x: 78, y: 798, width: 924, height: 822 },
@@ -326,13 +326,14 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     drawCaption(caption, alignment, color, fontSize) {
       if (!caption.trim()) return;
-      const { x, y, leftX, rightX, maxWidth, fontSize: defaultFontSize, lineHeight } = this.config.layout.caption;
+      const { x, y, leftX, rightX, maxWidth, fontSize: defaultFontSize } = this.config.layout.caption;
       const ctx = this.ctx;
       ctx.save();
       ctx.fillStyle = color;
       ctx.textAlign = alignment;
       ctx.textBaseline = "middle";
       const activeFontSize = fontSize || defaultFontSize;
+      const lineHeight = activeFontSize * 1.5;
       let lines = this.explicitLines(caption);
       this.setCaptionFont(activeFontSize);
       if (this.widestLine(lines) > maxWidth) {
