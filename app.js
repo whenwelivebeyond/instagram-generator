@@ -64,7 +64,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       defaultCharacter: "donkey",
       allowBackgroundChoice: false,
       allowTextColorChoice: false,
-      textColor: "#794D00",
+      textColor: "#181818",
       layout: {
         caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 60, minFontSize: 60, lineHeight: 90 },
         artBox: { x: 78, y: 798, width: 924, height: 822 },
