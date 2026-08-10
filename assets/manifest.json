@@ -1,6 +1,6 @@
 {
   "backgrounds": [
-    "assets/backgrounds/huskybg.jpg"
+    "assets/backgrounds/Husky.jpg"
   ],
   "huskies": [
     "assets/huskies/Pose 1.png",
@@ -18,6 +18,23 @@
   "donkeys": [
     "assets/donkey/Pose 1.png", "assets/donkey/Pose 2.png", "assets/donkey/Pose 3.png", "assets/donkey/Pose 4.png", "assets/donkey/Pose 5.png", "assets/donkey/Pose 6.png", "assets/donkey/Pose 7.png", "assets/donkey/Pose 8.png", "assets/donkey/Pose 9.png", "assets/donkey/Pose 10.png", "assets/donkey/Pose 11.png", "assets/donkey/Pose 12.png", "assets/donkey/Pose 13.png", "assets/donkey/Pose 14.png"
   ],
+  "corporateCharacters": {
+    "donkey": [
+      "assets/donkey/Pose 1.png", "assets/donkey/Pose 2.png", "assets/donkey/Pose 3.png", "assets/donkey/Pose 4.png", "assets/donkey/Pose 5.png", "assets/donkey/Pose 6.png", "assets/donkey/Pose 7.png", "assets/donkey/Pose 8.png", "assets/donkey/Pose 9.png", "assets/donkey/Pose 10.png", "assets/donkey/Pose 11.png", "assets/donkey/Pose 12.png", "assets/donkey/Pose 13.png", "assets/donkey/Pose 14.png"
+    ],
+    "husky": [
+      "assets/corporate-husky/Pose 1.png", "assets/corporate-husky/Pose 2.png", "assets/corporate-husky/Pose 3.png", "assets/corporate-husky/Pose 4.png", "assets/corporate-husky/Pose 5.png", "assets/corporate-husky/Pose 6.png", "assets/corporate-husky/Pose 7.png", "assets/corporate-husky/Pose 8.png", "assets/corporate-husky/Pose 9.png", "assets/corporate-husky/Pose 10.png", "assets/corporate-husky/Pose 11.png", "assets/corporate-husky/Pose 12.png", "assets/corporate-husky/Pose 13.png", "assets/corporate-husky/Pose 14.png"
+    ],
+    "chicken": [
+      "assets/chicken/Pose 1.png", "assets/chicken/Pose 2.png", "assets/chicken/Pose 3.png", "assets/chicken/Pose 4.png", "assets/chicken/Pose 5.png", "assets/chicken/Pose 6.png", "assets/chicken/Pose 7.png", "assets/chicken/Pose 8.png", "assets/chicken/Pose 9.png", "assets/chicken/Pose 10.png", "assets/chicken/Pose 11.png", "assets/chicken/Pose 12.png"
+    ],
+    "gazelle": [
+      "assets/gazelle/Pose 1.png", "assets/gazelle/Pose 2.png", "assets/gazelle/Pose 3.png", "assets/gazelle/Pose 4.png", "assets/gazelle/Pose 5.png", "assets/gazelle/Pose 6.png", "assets/gazelle/Pose 7.png", "assets/gazelle/Pose 8.png", "assets/gazelle/Pose 9.png", "assets/gazelle/Pose 10.png", "assets/gazelle/Pose 11.png", "assets/gazelle/Pose 12.png", "assets/gazelle/Pose 13.png", "assets/gazelle/Pose 14.png", "assets/gazelle/Pose 15.png"
+    ],
+    "cat": [
+      "assets/cat/Pose 1.png", "assets/cat/Pose 2.png", "assets/cat/Pose 3.png", "assets/cat/Pose 4.png", "assets/cat/Pose 5.png", "assets/cat/Pose 6.png", "assets/cat/Pose 7.png", "assets/cat/Pose 8.png", "assets/cat/Pose 9.png", "assets/cat/Pose 10.png", "assets/cat/Pose 11.png", "assets/cat/Pose 12.png", "assets/cat/Pose 13.png", "assets/cat/Pose 14.png"
+    ]
+  },
   "cows": [
     "assets/cow/Pose 1.png", "assets/cow/Pose 2.png", "assets/cow/Pose 3.png", "assets/cow/Pose 4.png", "assets/cow/Pose 5.png", "assets/cow/Pose 6.png", "assets/cow/Pose 7.png", "assets/cow/Pose 8.png", "assets/cow/Pose 9.png", "assets/cow/Pose 10.png", "assets/cow/Pose 11.png", "assets/cow/Pose 12.png", "assets/cow/Pose 13.png", "assets/cow/Pose 14.png", "assets/cow/Pose 15.png", "assets/cow/Pose 16.png", "assets/cow/Pose 17.png", "assets/cow/Pose 18.png"
   ],

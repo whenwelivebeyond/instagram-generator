@@ -12,7 +12,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
   const MAX_CAPTION_FONT_SIZE = 90;
   const ACCOUNT_LABELS = {
     pawsitive_husky: "Pawsitive.husky",
-    corporate_donkey: "The.corporate.donkey",
+    corporate_donkey: "The.corporate.jungle",
     mooing_aunty: "The.mooing.aunty"
   };
   const HASHTAG_GROUPS = {
@@ -24,7 +24,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       ]
     },
     corporate_donkey: {
-      label: "The corporate donkey",
+      label: "The corporate jungle",
       groups: [["office", "Office", 2], ["corporate", "Corporate", 2], ["generic", "Generic", 1]]
     },
     mooing_aunty: {
@@ -38,7 +38,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       title: "Pawsitive.husky",
       accountKey: "pawsitive_husky",
       defaultCaption: "",
-      defaultBackground: "assets/backgrounds/huskybg.jpg",
+      defaultBackground: "assets/backgrounds/Husky.jpg",
       defaultHusky: "assets/huskies/Pose 1.png",
       poseSet: "huskies",
       allowBackgroundChoice: false,
@@ -53,12 +53,15 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       }
     },
     donkey: {
-      title: "The.corporate.donkey",
+      title: "The.corporate.jungle",
       accountKey: "corporate_donkey",
       defaultCaption: "",
       defaultBackground: "assets/backgrounds/Corporate.jpg",
       defaultHusky: "assets/donkey/Pose 1.png",
       poseSet: "donkeys",
+      characters: ["donkey", "husky", "chicken", "gazelle", "cat"],
+      characterPoseSet: "corporateCharacters",
+      defaultCharacter: "donkey",
       allowBackgroundChoice: false,
       allowTextColorChoice: false,
       textColor: "#181818",
@@ -425,6 +428,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         accountSelect: document.querySelector("#accountSelect"),
         backgroundControl: document.querySelector("#backgroundControl"),
         backgroundGrid: document.querySelector("#backgroundGrid"),
+        characterPoseRow: document.querySelector("#characterPoseRow"),
+        characterControl: document.querySelector("#characterControl"),
+        characterSelect: document.querySelector("#characterSelect"),
         huskyButton: document.querySelector("#huskyPickerButton"),
         huskyOptions: document.querySelector("#huskyOptions"),
         captionInput: document.querySelector("#captionInput"),
@@ -459,6 +465,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     async init() {
       await this.assets.loadFonts();
       this.renderBackgroundChoices();
+      this.renderCharacterControl();
       this.renderHuskyChoices();
       this.renderAlignmentButtons();
       this.bindNavigation();
@@ -521,6 +528,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       localStorage.setItem(LAST_GENERATOR_KEY, generatorKey);
       this.selectedSavedCaptionId = null;
       this.renderBackgroundChoices();
+      this.renderCharacterControl();
       this.renderHuskyChoices();
       this.renderSavedCaptionOptions();
       this.prefillFirstSavedCaption();
@@ -533,6 +541,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       return {
         background: config.defaultBackground,
         husky: config.defaultHusky,
+        character: config.defaultCharacter || null,
+        characterPoses: {},
         caption: config.defaultCaption,
         alignment: "center",
         textColor: config.textColor || "#FFFFFF",
@@ -556,7 +566,16 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     stateForGenerator(generatorKey) {
       const config = GENERATORS[generatorKey];
       const saved = this.generatorStates[generatorKey] || {};
-      const poses = this.assets.manifest[config.poseSet];
+      const character = config.characters?.includes(saved.character) ? saved.character : config.defaultCharacter;
+      const poses = this.posePaths(config, character);
+      const characterPoses = config.characters
+        ? Object.fromEntries(config.characters.map((item) => {
+          const characterPaths = this.posePaths(config, item);
+          const savedPose = saved.characterPoses?.[item]
+            || (item === config.defaultCharacter ? saved.husky : undefined);
+          return [item, characterPaths.includes(savedPose) ? savedPose : characterPaths[0]];
+        }))
+        : {};
       const backgroundIsValid = config.allowBackgroundChoice
         ? this.assets.manifest.backgrounds.includes(saved.background)
         : saved.background === config.defaultBackground;
@@ -564,7 +583,11 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         ...this.defaultGeneratorState(config),
         ...saved,
         background: backgroundIsValid ? saved.background : config.defaultBackground,
-        husky: poses.includes(saved.husky) ? saved.husky : config.defaultHusky,
+        husky: config.characters
+          ? characterPoses[character]
+          : poses.includes(saved.husky) ? saved.husky : config.defaultHusky,
+        character,
+        characterPoses,
         caption: "",
         textColor: config.textColor || saved.textColor || "#FFFFFF",
         fontSize: Math.min(MAX_CAPTION_FONT_SIZE, Math.max(MIN_CAPTION_FONT_SIZE, Number(saved.fontSize) || config.layout.caption.fontSize))
@@ -610,6 +633,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     bindGeneratorControls() {
       this.dom.accountSelect.addEventListener("change", (event) => this.selectGenerator(event.target.value));
+      this.dom.characterSelect.addEventListener("change", (event) => this.selectCharacter(event.target.value));
       this.dom.captionInput.addEventListener("input", (event) => {
         this.setState({ caption: event.target.value });
       });
@@ -797,9 +821,31 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       });
     }
 
+    posePaths(config = this.config, character = this.state?.character) {
+      if (config.characterPoseSet) return this.assets.manifest[config.characterPoseSet]?.[character] || [];
+      return this.assets.manifest[config.poseSet] || [];
+    }
+
+    renderCharacterControl() {
+      const hasCharacters = Boolean(this.config.characters);
+      this.dom.characterControl.classList.toggle("is-hidden", !hasCharacters);
+      this.dom.characterPoseRow.classList.toggle("character-hidden", !hasCharacters);
+      if (hasCharacters) this.dom.characterSelect.value = this.state.character;
+    }
+
+    selectCharacter(character) {
+      if (!this.config.characters?.includes(character)) return;
+      const poses = this.posePaths(this.config, character);
+      this.setState({
+        character,
+        husky: this.state.characterPoses?.[character] || poses[0] || this.config.defaultHusky
+      });
+      this.renderHuskyChoices();
+    }
+
     renderHuskyChoices() {
       this.dom.huskyOptions.innerHTML = "";
-      this.assets.manifest[this.config.poseSet].forEach((path) => {
+      this.posePaths().forEach((path) => {
         const option = document.createElement("button");
         option.className = "image-option";
         option.type = "button";
@@ -807,7 +853,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         option.dataset.path = path;
         option.innerHTML = `<img src="${path}" alt=""><span>${this.fileLabel(path)}</span>`;
         option.addEventListener("click", () => {
-          this.setState({ husky: path });
+          const characterPoses = this.config.characters
+            ? { ...this.state.characterPoses, [this.state.character]: path }
+            : this.state.characterPoses;
+          this.setState({ husky: path, characterPoses });
           this.dom.huskyOptions.classList.remove("open");
         });
         this.dom.huskyOptions.append(option);
@@ -1352,12 +1401,30 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         this.setCaptionStorageStatus("The download completed, but the caption status could not be saved.", true);
       }
 
-      const nextPose = this.nextItem(this.assets.manifest[this.config.poseSet], this.state.husky);
+      const nextCharacter = this.config.characters
+        ? this.nextItem(this.config.characters, this.state.character)
+        : this.state.character;
+      const currentPoses = this.posePaths();
+      const nextPoses = this.posePaths(this.config, nextCharacter);
+      const advancedCurrentPose = this.nextItem(currentPoses, this.state.husky);
+      const characterPoses = this.config.characters
+        ? { ...this.state.characterPoses, [this.state.character]: advancedCurrentPose }
+        : this.state.characterPoses;
+      const nextPose = this.config.characters
+        ? characterPoses[nextCharacter] || nextPoses[0] || this.config.defaultHusky
+        : advancedCurrentPose;
       const nextCaption = usedCaptionId ? this.nextUnusedCaption(usedCaptionId) : null;
       this.selectedSavedCaptionId = nextCaption?.id || null;
-      const patch = { caption: nextCaption?.caption || "", husky: nextPose };
+      const patch = {
+        caption: nextCaption?.caption || "",
+        husky: nextPose,
+        character: nextCharacter,
+        characterPoses
+      };
 
       this.setState(patch);
+      this.renderCharacterControl();
+      this.renderHuskyChoices();
       this.renderSavedCaptionOptions();
       this.preloadGeneratorHashtags();
     }
@@ -1389,6 +1456,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.dom.captionInput.value = this.state.caption;
       this.dom.accountSelect.value = Object.keys(GENERATORS).find((key) => GENERATORS[key] === this.config);
       this.dom.textColorControl.classList.toggle("is-hidden", !this.config.allowTextColorChoice);
+      if (this.config.characters) this.dom.characterSelect.value = this.state.character;
       this.dom.fontSizeValue.value = `${this.state.fontSize}px`;
       this.dom.fontSizeValue.textContent = `${this.state.fontSize}px`;
       this.dom.decreaseFontSizeButton.disabled = this.state.fontSize <= MIN_CAPTION_FONT_SIZE;
