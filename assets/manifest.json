@@ -55,6 +55,6 @@
     "stones": "assets/template/stones.png"
   },
   "fonts": {
-    "patrickHand": "assets/fonts/PatrickHand-Regular.ttf"
+    "patrickHandSc": "assets/fonts/PatrickHandSC-Regular.ttf"
   }
 }

@@ -244,14 +244,14 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     async loadFonts() {
-      if (!this.manifest.fonts?.patrickHand || !("FontFace" in window)) return;
-      const patrickHand = new FontFace("Patrick Hand", `url("${this.manifest.fonts.patrickHand}")`, {
+      if (!this.manifest.fonts?.patrickHandSc || !("FontFace" in window)) return;
+      const patrickHand = new FontFace("Patrick Hand SC", `url("${this.manifest.fonts.patrickHandSc}")`, {
         style: "normal",
         weight: "400"
       });
       const loaded = await patrickHand.load();
       document.fonts.add(loaded);
-      await document.fonts.load('75px "Patrick Hand"');
+      await document.fonts.load('75px "Patrick Hand SC"');
     }
 
     image(path) {
@@ -348,7 +348,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     setCaptionFont(size) {
-      this.ctx.font = `400 ${size}px "Comic Sans MS", "Trebuchet MS", sans-serif`;
+      this.ctx.font = `400 ${size}px "Patrick Hand SC", "Comic Sans MS", "Trebuchet MS", sans-serif`;
     }
 
     explicitLines(text) {
