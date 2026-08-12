@@ -46,7 +46,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       allowTextColorChoice: false,
       textColor: "#794D00",
       layout: {
-        caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 60, minFontSize: 60, lineHeight: 90 },
+        caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 72, minFontSize: 72, lineHeight: 90 },
         artBox: { x: 78, y: 798, width: 924, height: 822 },
         decorations: {
           shadowColor: "rgba(37, 37, 37, 0.24)"
@@ -67,7 +67,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       allowTextColorChoice: false,
       textColor: "#181818",
       layout: {
-        caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 60, minFontSize: 60, lineHeight: 90 },
+        caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 72, minFontSize: 72, lineHeight: 90 },
         artBox: { x: 78, y: 798, width: 924, height: 822 },
         decorations: { shadowColor: "rgba(37, 37, 37, 0.24)" }
       }
@@ -83,7 +83,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       allowTextColorChoice: false,
       textColor: "#3A2E28",
       layout: {
-        caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 60, minFontSize: 60, lineHeight: 90 },
+        caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 72, minFontSize: 72, lineHeight: 90 },
         artBox: { x: 78, y: 798, width: 924, height: 822 },
         decorations: { shadowColor: "rgba(37, 37, 37, 0.24)" }
       }
@@ -334,7 +334,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       ctx.textAlign = alignment;
       ctx.textBaseline = "middle";
       const activeFontSize = fontSize || defaultFontSize;
-      const lineHeight = activeFontSize * 1.5;
+      const lineHeight = activeFontSize * 1.2;
       let lines = this.explicitLines(caption);
       this.setCaptionFont(activeFontSize);
       if (this.widestLine(lines) > maxWidth) {
