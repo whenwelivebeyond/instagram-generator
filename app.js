@@ -285,7 +285,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       ]);
 
       ctx.drawImage(background, 0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
-      this.drawCaption(state.caption, state.alignment, state.textColor, state.fontSize);
+      this.drawCaption(state.caption, state.alignment, state.textColor, state.fontSize, state.captionYOffset);
       this.drawArtwork(husky);
     }
 
@@ -325,7 +325,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       };
     }
 
-    drawCaption(caption, alignment, color, fontSize) {
+    drawCaption(caption, alignment, color, fontSize, captionYOffset = 0) {
       if (!caption.trim()) return;
       const { x, y, leftX, rightX, maxWidth, fontSize: defaultFontSize } = this.config.layout.caption;
       const ctx = this.ctx;
@@ -342,7 +342,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       }
       const alignX = alignment === "left" ? leftX : alignment === "right" ? rightX : x;
       lines.forEach((line, index) => {
-        ctx.fillText(line, alignX, y + index * lineHeight);
+        ctx.fillText(line, alignX, y + captionYOffset + index * lineHeight);
       });
       ctx.restore();
     }
@@ -447,6 +447,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         decreaseFontSizeButton: document.querySelector("#decreaseFontSizeButton"),
         increaseFontSizeButton: document.querySelector("#increaseFontSizeButton"),
         fontSizeValue: document.querySelector("#fontSizeValue"),
+        moveCaptionUpButton: document.querySelector("#moveCaptionUpButton"),
+        moveCaptionDownButton: document.querySelector("#moveCaptionDownButton"),
+        captionPositionValue: document.querySelector("#captionPositionValue"),
         downloadButton: document.querySelector("#downloadButton"),
         captionAccountSelect: document.querySelector("#captionAccountSelect"),
         captionCenterInput: document.querySelector("#captionCenterInput"),
@@ -573,7 +576,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         caption: config.defaultCaption,
         alignment: "center",
         textColor: config.textColor || "#FFFFFF",
-        fontSize: config.layout.caption.fontSize
+        fontSize: config.layout.caption.fontSize,
+        captionYOffset: 0
       };
     }
 
@@ -645,7 +649,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         characterPoses,
         caption: "",
         textColor: config.textColor || saved.textColor || "#FFFFFF",
-        fontSize: Math.min(MAX_CAPTION_FONT_SIZE, Math.max(MIN_CAPTION_FONT_SIZE, Number(saved.fontSize) || config.layout.caption.fontSize))
+        fontSize: Math.min(MAX_CAPTION_FONT_SIZE, Math.max(MIN_CAPTION_FONT_SIZE, Number(saved.fontSize) || config.layout.caption.fontSize)),
+        captionYOffset: Math.min(400, Math.max(-250, Number(saved.captionYOffset) || 0))
       };
     }
 
@@ -710,6 +715,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       });
       this.dom.decreaseFontSizeButton.addEventListener("click", () => this.changeFontSize(-1));
       this.dom.increaseFontSizeButton.addEventListener("click", () => this.changeFontSize(1));
+      this.dom.moveCaptionUpButton.addEventListener("click", () => this.moveCaption(-10));
+      this.dom.moveCaptionDownButton.addEventListener("click", () => this.moveCaption(10));
       this.dom.downloadButton.addEventListener("click", () => this.downloadPost());
       document.addEventListener("click", (event) => {
         if (!event.target.closest("#huskySelect")) this.dom.huskyOptions.classList.remove("open");
@@ -1073,6 +1080,11 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     changeFontSize(amount) {
       const fontSize = Math.min(MAX_CAPTION_FONT_SIZE, Math.max(MIN_CAPTION_FONT_SIZE, this.state.fontSize + amount));
       if (fontSize !== this.state.fontSize) this.setState({ fontSize });
+    }
+
+    moveCaption(amount) {
+      const captionYOffset = Math.min(400, Math.max(-250, this.state.captionYOffset + amount));
+      if (captionYOffset !== this.state.captionYOffset) this.setState({ captionYOffset });
     }
 
     renderCaptionTable() {
@@ -1585,6 +1597,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.dom.fontSizeValue.textContent = `${this.state.fontSize}px`;
       this.dom.decreaseFontSizeButton.disabled = this.state.fontSize <= MIN_CAPTION_FONT_SIZE;
       this.dom.increaseFontSizeButton.disabled = this.state.fontSize >= MAX_CAPTION_FONT_SIZE;
+      this.dom.captionPositionValue.value = `${this.state.captionYOffset}px`;
+      this.dom.captionPositionValue.textContent = `${this.state.captionYOffset}px`;
+      this.dom.moveCaptionUpButton.disabled = this.state.captionYOffset <= -250;
+      this.dom.moveCaptionDownButton.disabled = this.state.captionYOffset >= 400;
       this.dom.backgroundGrid.querySelectorAll(".background-option").forEach((button) => {
         button.classList.toggle("active", button.dataset.path === this.state.background);
       });

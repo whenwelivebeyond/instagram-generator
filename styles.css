@@ -377,7 +377,7 @@ textarea {
 
 .control-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
   align-items: end;
   gap: 10px;
 }
@@ -440,6 +440,11 @@ textarea {
 #alignmentButtons {
   flex-wrap: nowrap;
   gap: 4px;
+}
+
+#alignmentButtons .icon-button {
+  width: calc((100% - 8px) / 3);
+  min-width: 0;
 }
 
 .icon-button,
@@ -1146,11 +1151,11 @@ textarea {
   }
 
   .control-row {
-    grid-template-columns: minmax(0, 1fr) 110px;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 
   #alignmentButtons .icon-button {
-    width: 44px;
+    width: calc((100% - 8px) / 3);
   }
 
   .controls-panel,
