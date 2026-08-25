@@ -9,6 +9,15 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
   const GENERATOR_STATE_KEY = "instagram_generator_account_states";
   const LAST_GENERATOR_KEY = "instagram_generator_last_account";
   const CHARACTER_AVAILABILITY_KEY = "instagram_generator_character_availability";
+  const HUSKY_BACKGROUND_CYCLE = [
+    "assets/backgrounds/Red.jpg",
+    "assets/backgrounds/Blue.jpg",
+    "assets/backgrounds/Yellow.jpg",
+    "assets/backgrounds/Green.jpg"
+  ];
+  const HUSKY_YELLOW_BACKGROUND = "assets/backgrounds/Yellow.jpg";
+  const HUSKY_DARK_TEXT = "#252525";
+  const HUSKY_WHITE_TEXT = "#FFFFFF";
   const MIN_CAPTION_FONT_SIZE = 30;
   const MAX_CAPTION_FONT_SIZE = 90;
   const ACCOUNT_LABELS = {
@@ -39,12 +48,11 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       title: "Pawsitive.husky",
       accountKey: "pawsitive_husky",
       defaultCaption: "",
-      defaultBackground: "assets/backgrounds/Husky.jpg",
+      defaultBackground: "assets/backgrounds/Red.jpg",
       defaultHusky: "assets/huskies/Pose 1.png",
       poseSet: "huskies",
-      allowBackgroundChoice: false,
-      allowTextColorChoice: false,
-      textColor: "#794D00",
+      allowBackgroundChoice: true,
+      allowTextColorChoice: true,
       layout: {
         caption: { x: 540, y: 298, leftX: 78, rightX: 1002, maxWidth: 924, fontSize: 72, minFontSize: 72, lineHeight: 90 },
         artBox: { x: 78, y: 798, width: 924, height: 822 },
@@ -648,7 +656,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         character,
         characterPoses,
         caption: "",
-        textColor: config.textColor || saved.textColor || "#FFFFFF",
+        textColor: config.textColor || (this.validTextColor(config, saved.textColor)
+          ? saved.textColor
+          : this.defaultTextColor(config, backgroundIsValid ? saved.background : config.defaultBackground)),
         fontSize: Math.min(MAX_CAPTION_FONT_SIZE, Math.max(MIN_CAPTION_FONT_SIZE, Number(saved.fontSize) || config.layout.caption.fontSize)),
         captionYOffset: Math.min(400, Math.max(-250, Number(saved.captionYOffset) || 0))
       };
@@ -803,6 +813,19 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
           }
         }
       });
+    }
+
+    defaultTextColor(config, background) {
+      if (config === GENERATORS.pawsitive) {
+        return background === HUSKY_YELLOW_BACKGROUND ? HUSKY_DARK_TEXT : HUSKY_WHITE_TEXT;
+      }
+      return config.textColor || "#FFFFFF";
+    }
+
+    validTextColor(config, color) {
+      return config === GENERATORS.pawsitive
+        ? [HUSKY_WHITE_TEXT, HUSKY_DARK_TEXT].includes(color)
+        : Boolean(color);
     }
 
     bindCharacterControlPage() {
@@ -1505,9 +1528,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     selectBackground(path) {
-      const patch = { background: path };
-      patch.textColor = path === YELLOW_BACKGROUND ? BLACK_TEXT : WHITE_TEXT;
-      this.setState(patch);
+      this.setState({
+        background: path,
+        textColor: path === HUSKY_YELLOW_BACKGROUND ? HUSKY_DARK_TEXT : HUSKY_WHITE_TEXT
+      });
     }
 
     nextItem(items, currentItem) {
@@ -1557,6 +1581,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         character: nextCharacter,
         characterPoses
       };
+      if (this.config === GENERATORS.pawsitive) {
+        patch.background = this.nextItem(HUSKY_BACKGROUND_CYCLE, this.state.background);
+        patch.textColor = patch.background === HUSKY_YELLOW_BACKGROUND ? HUSKY_DARK_TEXT : HUSKY_WHITE_TEXT;
+      }
 
       this.setState(patch);
       this.renderCharacterControl();
