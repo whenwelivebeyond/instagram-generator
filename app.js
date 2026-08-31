@@ -1540,6 +1540,15 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     async downloadPost() {
+      try {
+        // A saved-caption selection redraws the preview asynchronously. Render once more
+        // here so the exported image always uses the currently selected caption.
+        await this.renderer.draw(this.state);
+      } catch (error) {
+        console.error(error);
+        this.setCaptionStorageStatus("The post image could not be prepared for download.", true);
+        return;
+      }
       this.renderer.download(`${this.config.accountKey.replace(/_/g, "-")}-post.jpg`);
       if (!this.state.caption.trim()) return;
 
