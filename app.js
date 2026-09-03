@@ -1572,8 +1572,9 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         this.setCaptionStorageStatus("The download completed, but the caption status could not be saved.", true);
       }
 
-      const nextCharacter = this.config.characters
-        ? this.nextItem(this.config.characters, this.state.character)
+      const characterCycle = this.config.characters ? this.availableCorporateCharacters() : [];
+      const nextCharacter = this.config.characters && characterCycle.length
+        ? this.nextItem(characterCycle, this.state.character)
         : this.state.character;
       const currentPoses = this.posePaths();
       const nextPoses = this.posePaths(this.config, nextCharacter);
