@@ -710,12 +710,21 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.dom.hashtagsInput.addEventListener("input", () => {
         this.dom.hashtagsInput.value = this.formatHashtagText(this.dom.hashtagsInput.value);
       });
-      this.dom.savedCaptionSelect.addEventListener("change", (event) => {
+      this.dom.savedCaptionSelect.addEventListener("change", async (event) => {
         if (!event.target.value) return;
         const caption = this.store.list(this.config.accountKey).find((item) => item.id === event.target.value);
         if (!caption) return;
         this.selectedSavedCaptionId = caption.id;
         this.setState({ caption: caption.caption });
+        // Finish the selected-caption redraw before the user presses Download.
+        // This preserves Download as a direct user action, so repeated downloads
+        // are not blocked by the browser.
+        try {
+          await this.renderPreview();
+        } catch (error) {
+          console.error(error);
+          this.setCaptionStorageStatus("The selected caption could not be prepared for preview.", true);
+        }
       });
       this.dom.randomizeCaptionButton.addEventListener("click", () => this.randomizeSavedCaption());
       this.dom.resetCaptionButton.addEventListener("click", () => this.resetGeneratorCaption());
@@ -1540,15 +1549,8 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
     }
 
     async downloadPost() {
-      try {
-        // A saved-caption selection redraws the preview asynchronously. Render once more
-        // here so the exported image always uses the currently selected caption.
-        await this.renderer.draw(this.state);
-      } catch (error) {
-        console.error(error);
-        this.setCaptionStorageStatus("The post image could not be prepared for download.", true);
-        return;
-      }
+      // Keep this first and synchronous. Waiting before this click makes browsers
+      // interpret later exports as automatic downloads and block them after one file.
       this.renderer.download(`${this.config.accountKey.replace(/_/g, "-")}-post.jpg`);
       if (!this.state.caption.trim()) return;
 
