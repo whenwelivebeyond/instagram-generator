@@ -392,7 +392,10 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       const link = document.createElement("a");
       link.download = filename;
       link.href = this.canvas.toDataURL("image/jpeg", 1);
+      link.style.display = "none";
+      document.body.append(link);
       link.click();
+      link.remove();
     }
   }
 
@@ -560,7 +563,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       if (!available.length) {
         this.dom.accountSelect.innerHTML = '<option value="">No character available</option>';
         this.dom.accountSelect.disabled = true;
-        this.dom.downloadButton.disabled = true;
+        this.setDownloadAvailability(false);
         return;
       }
       if (!available.includes(this.generatorKey)) this.selectGenerator(available[0]);
@@ -572,7 +575,12 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
 
     updateGeneratorAvailability() {
       const corporateHasCharacters = this.generatorKey !== "donkey" || this.availableCorporateCharacters().length > 0;
-      this.dom.downloadButton.disabled = !this.characterAvailability.accounts[this.generatorKey] || !corporateHasCharacters;
+      this.setDownloadAvailability(this.characterAvailability.accounts[this.generatorKey] && corporateHasCharacters);
+    }
+
+    setDownloadAvailability(isAvailable) {
+      this.dom.downloadButton.classList.toggle("is-disabled", !isAvailable);
+      this.dom.downloadButton.setAttribute("aria-disabled", String(!isAvailable));
     }
 
     defaultGeneratorState(config) {
@@ -673,8 +681,22 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       localStorage.setItem(LAST_GENERATOR_KEY, this.generatorKey);
     }
 
-    async renderPreview() {
-      await this.renderer.draw(this.state);
+    async renderPreview(state = this.state) {
+      if (state === this.state) this.dom.downloadButton.dataset.ready = "false";
+      await this.renderer.draw(state);
+      if (state !== this.state) return;
+      await this.prepareDownloadLink(state);
+    }
+
+    async prepareDownloadLink(state) {
+      const link = this.dom.downloadButton;
+      const blob = await new Promise((resolve) => this.dom.previewCanvas.toBlob(resolve, "image/jpeg", 1));
+      if (!blob || state !== this.state) return;
+      if (this.downloadObjectUrl) URL.revokeObjectURL(this.downloadObjectUrl);
+      this.downloadObjectUrl = URL.createObjectURL(blob);
+      link.href = this.downloadObjectUrl;
+      link.download = `${this.config.accountKey.replace(/_/g, "-")}-post.jpg`;
+      link.dataset.ready = "true";
     }
 
     bindNavigation() {
@@ -736,7 +758,7 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       this.dom.increaseFontSizeButton.addEventListener("click", () => this.changeFontSize(1));
       this.dom.moveCaptionUpButton.addEventListener("click", () => this.moveCaption(-10));
       this.dom.moveCaptionDownButton.addEventListener("click", () => this.moveCaption(10));
-      this.dom.downloadButton.addEventListener("click", () => this.downloadPost());
+      this.dom.downloadButton.addEventListener("click", (event) => this.downloadPost(event));
       document.addEventListener("click", (event) => {
         if (!event.target.closest("#huskySelect")) this.dom.huskyOptions.classList.remove("open");
       });
@@ -1548,23 +1570,37 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
       return items[(currentIndex + 1 + items.length) % items.length];
     }
 
-    async downloadPost() {
-      // Keep this first and synchronous. Waiting before this click makes browsers
-      // interpret later exports as automatic downloads and block them after one file.
-      this.renderer.download(`${this.config.accountKey.replace(/_/g, "-")}-post.jpg`);
-      if (!this.state.caption.trim()) return;
+    downloadPost(event) {
+      if (this.dom.downloadButton.getAttribute("aria-disabled") === "true" || this.dom.downloadButton.dataset.ready !== "true") {
+        event.preventDefault();
+        this.setCaptionStorageStatus("The post is still being prepared. Please try Download again in a moment.", true);
+        return;
+      }
+      // The anchor's native, trusted click performs the export. This avoids the
+      // browser's one-time limit on synthetic download clicks.
+      const download = {
+        config: this.config,
+        state: { ...this.state, characterPoses: { ...(this.state.characterPoses || {}) } },
+        selectedCaptionId: this.selectedSavedCaptionId,
+        hashtags: this.dom.hashtagsInput.value
+      };
+      void this.finishPostDownload(download);
+    }
 
-      const captionText = this.state.caption.trim();
-      await this.copyPostText(captionText, this.dom.hashtagsInput.value);
-      const usedCaptionId = this.selectedSavedCaptionId;
+    async finishPostDownload({ config, state, selectedCaptionId, hashtags }) {
+      if (!state.caption.trim()) return;
+
+      const captionText = state.caption.trim();
+      await this.copyPostText(captionText, hashtags);
+      const usedCaptionId = selectedCaptionId;
       try {
         if (usedCaptionId) {
           await this.store.update(usedCaptionId, { status: "used", usedAt: Date.now() });
         } else {
-          await this.store.add(this.config.accountKey, captionText, {
+          await this.store.add(config.accountKey, captionText, {
             status: "used",
             usedAt: Date.now(),
-            sortOrder: this.nextCaptionSortOrder(this.config.accountKey)
+            sortOrder: this.nextCaptionSortOrder(config.accountKey)
           });
         }
       } catch (error) {
@@ -1572,18 +1608,18 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         this.setCaptionStorageStatus("The download completed, but the caption status could not be saved.", true);
       }
 
-      const characterCycle = this.config.characters ? this.availableCorporateCharacters() : [];
-      const nextCharacter = this.config.characters && characterCycle.length
-        ? this.nextItem(characterCycle, this.state.character)
-        : this.state.character;
-      const currentPoses = this.posePaths();
-      const nextPoses = this.posePaths(this.config, nextCharacter);
-      const advancedCurrentPose = this.nextItem(currentPoses, this.state.husky);
-      const characterPoses = this.config.characters
-        ? { ...this.state.characterPoses, [this.state.character]: advancedCurrentPose }
-        : this.state.characterPoses;
-      const nextPose = this.config.characters
-        ? characterPoses[nextCharacter] || nextPoses[0] || this.config.defaultHusky
+      const characterCycle = config.characters ? this.availableCorporateCharacters() : [];
+      const nextCharacter = config.characters && characterCycle.length
+        ? this.nextItem(characterCycle, state.character)
+        : state.character;
+      const currentPoses = this.posePaths(config, state.character);
+      const nextPoses = this.posePaths(config, nextCharacter);
+      const advancedCurrentPose = this.nextItem(currentPoses, state.husky);
+      const characterPoses = config.characters
+        ? { ...state.characterPoses, [state.character]: advancedCurrentPose }
+        : state.characterPoses;
+      const nextPose = config.characters
+        ? characterPoses[nextCharacter] || nextPoses[0] || config.defaultHusky
         : advancedCurrentPose;
       const nextCaption = usedCaptionId ? this.nextUnusedCaption(usedCaptionId) : null;
       this.selectedSavedCaptionId = nextCaption?.id || null;
@@ -1593,11 +1629,12 @@ import { DEFAULT_HASHTAGS } from "./hashtag-seeds.js";
         character: nextCharacter,
         characterPoses
       };
-      if (this.config === GENERATORS.pawsitive) {
-        patch.background = this.nextItem(HUSKY_BACKGROUND_CYCLE, this.state.background);
+      if (config === GENERATORS.pawsitive) {
+        patch.background = this.nextItem(HUSKY_BACKGROUND_CYCLE, state.background);
         patch.textColor = patch.background === HUSKY_YELLOW_BACKGROUND ? HUSKY_DARK_TEXT : HUSKY_WHITE_TEXT;
       }
 
+      if (this.config !== config) return;
       this.setState(patch);
       this.renderCharacterControl();
       this.renderHuskyChoices();

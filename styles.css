@@ -555,16 +555,25 @@ textarea {
 }
 
 .download-button {
+  display: grid;
+  place-items: center;
   min-height: 48px;
   border: 0;
   border-radius: var(--radius);
   background: #111827;
   color: #ffffff;
   font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .download-button:hover {
   background: #263244;
+}
+
+.download-button.is-disabled {
+  pointer-events: none;
+  opacity: 0.45;
 }
 
 .coming-soon {
