@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram Post Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -94,20 +97,20 @@
               </div>
 
               <div class="control-group compact">
-                <label>Caption position</label>
+                <label>Position</label>
                 <div class="font-size-control caption-position-control">
-                  <button id="moveCaptionUpButton" type="button" aria-label="Move caption up" title="Move caption up">↑</button>
+                  <button id="moveCaptionUpButton" type="button" aria-label="Move caption up" title="Move caption up"><img src="assets/icons/Caption up.svg" alt=""></button>
                   <output id="captionPositionValue" aria-live="polite">0</output>
-                  <button id="moveCaptionDownButton" type="button" aria-label="Move caption down" title="Move caption down">↓</button>
+                  <button id="moveCaptionDownButton" type="button" aria-label="Move caption down" title="Move caption down"><img src="assets/icons/Caption down.svg" alt=""></button>
                 </div>
               </div>
 
               <div class="control-group compact">
                 <label>Font size</label>
                 <div class="font-size-control">
-                  <button id="decreaseFontSizeButton" type="button" aria-label="Decrease font size">−</button>
+                  <button id="decreaseFontSizeButton" type="button" aria-label="Decrease font size"><img src="assets/icons/Minus.svg" alt=""></button>
                   <output id="fontSizeValue" aria-live="polite">60px</output>
-                  <button id="increaseFontSizeButton" type="button" aria-label="Increase font size">+</button>
+                  <button id="increaseFontSizeButton" type="button" aria-label="Increase font size"><img src="assets/icons/Plus.svg" alt=""></button>
                 </div>
               </div>
 
@@ -164,7 +167,7 @@
                   <button class="toolbar-button" type="button" data-action="open-search" aria-label="Search captions" title="Search"><img src="assets/icons/Search.svg" alt=""></button>
                   <div class="search-field" id="searchField">
                     <input id="captionSearchInput" type="search" placeholder="Search captions">
-                    <button class="toolbar-button" type="button" data-action="close-search" aria-label="Close search">×</button>
+                    <button class="toolbar-button" type="button" data-action="close-search" aria-label="Close search"><img src="assets/icons/Close.svg" alt=""></button>
                   </div>
                 </div>
                 <div class="toolbar-menu caption-filter-menu">

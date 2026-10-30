@@ -1,14 +1,22 @@
 :root {
-  --bg: #f4f5f7;
-  --surface: #ffffff;
-  --surface-strong: #f9fafb;
-  --text: #1f2933;
-  --muted: #657282;
-  --border: #dce1e7;
-  --accent: #2563eb;
-  --accent-soft: #dbeafe;
-  --shadow: 0 14px 38px rgba(29, 40, 56, 0.12);
-  --radius: 8px;
+  color-scheme: dark;
+  --bg: #16120f;
+  --surface: #221c17;
+  --surface-strong: #1a1511;
+  --text: #f0e3cc;
+  --muted: #9c8b76;
+  --border: #3a2f26;
+  --border-strong: #4a3c30;
+  --accent: #e0a341;
+  --accent-soft: rgba(224, 163, 65, 0.12);
+  --accent-ink: #1a1208;
+  --danger: #d98068;
+  --positive: #7fb0a2;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --radius: 3px;
+  --control-height: 40px;
+  --font-ui: Barlow, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-label: "Barlow Condensed", Barlow, ui-sans-serif, system-ui, sans-serif;
 }
 
 @font-face {
@@ -26,9 +34,24 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(55% 32% at 88% -4%, rgba(224, 163, 65, 0.18) 0%, rgba(224, 163, 65, 0) 68%),
+    radial-gradient(45% 30% at 4% 102%, rgba(74, 123, 124, 0.16) 0%, rgba(74, 123, 124, 0) 68%);
+  background-attachment: fixed;
   color: var(--text);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
+}
+
+/* film grain: decorative only, never intercepts input */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  opacity: 0.13;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 
 button,
@@ -49,16 +72,19 @@ button {
   align-items: center;
   justify-content: center;
   height: 64px;
-  background: rgba(255, 255, 255, 0.92);
+  background-color: rgba(22, 18, 15, 0.88);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(8px);
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 750;
-  letter-spacing: 0;
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
 }
 
 .menu-button {
@@ -71,13 +97,13 @@ button {
   place-content: center;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background-color: var(--surface);
 }
 
 .menu-button span {
   width: 19px;
   height: 2px;
-  background: var(--text);
+  background: var(--accent);
   border-radius: 2px;
 }
 
@@ -92,7 +118,7 @@ button {
   width: min(320px, 86vw);
   height: 100vh;
   padding: 84px 18px 18px;
-  background: var(--surface);
+  background-color: #1c1713;
   border-right: 1px solid var(--border);
   box-shadow: var(--shadow);
   transform: translateX(-105%);
@@ -108,7 +134,7 @@ button {
   inset: 0;
   z-index: 30;
   display: none;
-  background: rgba(16, 24, 40, 0.32);
+  background: rgba(10, 7, 5, 0.72);
 }
 
 .menu-scrim.open {
@@ -120,17 +146,26 @@ button {
   padding: 0 14px;
   border: 1px solid transparent;
   border-radius: var(--radius);
-  background: transparent;
+  background-color: transparent;
   color: var(--text);
   text-align: left;
-  font-weight: 700;
+  font-family: var(--font-label);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.nav-item:hover,
+.nav-item:hover {
+  border-color: var(--border-strong);
+  background-color: var(--accent-soft);
+  color: var(--text);
+}
+
 .nav-item.active {
-  border-color: var(--border);
-  background: var(--accent-soft);
-  color: #174ea6;
+  border-color: var(--accent);
+  background-color: rgba(224, 163, 65, 0.14);
+  color: var(--accent);
 }
 
 .app-shell {
@@ -153,13 +188,17 @@ button {
   align-items: start;
 }
 
+/* ---------------------------------------------------------------------
+   The preview is the print under the safelight: the only fully saturated
+   object on the page, framed like a photographic print.
+   --------------------------------------------------------------------- */
 .preview-panel {
   display: grid;
   justify-items: center;
-  padding: 18px;
+  padding: 22px;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border-radius: 4px;
+  background-color: var(--surface-strong);
   box-shadow: var(--shadow);
 }
 
@@ -167,25 +206,40 @@ button {
   width: min(100%, 430px);
   aspect-ratio: 9 / 16;
   height: auto;
-  border-radius: 4px;
-  background: #d21e24;
-  box-shadow: 0 10px 28px rgba(17, 24, 39, 0.2);
+  border: 10px solid #efe7d6;
+  border-bottom-width: 30px;
+  border-radius: 1px;
+  background: var(--surface-strong);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.65);
 }
 
 .controls-panel,
 .caption-form,
 .caption-table-wrap {
-  padding: 18px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border-radius: 4px;
+  background-color: var(--surface);
   box-shadow: var(--shadow);
 }
 
+/* ---------------------------------------------------------------------
+   Controls panel order. The caption formatting band sits under the
+   background swatches; everything else keeps its source order.
+   --------------------------------------------------------------------- */
 .controls-panel {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
+
+.controls-panel > .control-group:nth-child(1) { order: 1; }  /* Account */
+#backgroundControl                            { order: 2; }
+.control-row                                  { order: 3; }  /* Alignment, Position, Font size */
+#characterPoseRow                             { order: 4; }
+.controls-panel > .control-group:nth-child(4) { order: 5; }  /* Saved caption */
+.controls-panel > .control-group:nth-child(5) { order: 6; }  /* Caption */
+.controls-panel > .control-group:nth-child(6) { order: 7; }  /* Hashtags */
+#downloadButton                               { order: 8; }
 
 .control-group {
   display: grid;
@@ -196,30 +250,56 @@ button {
   display: none;
 }
 
+/* Text colour follows the chosen background automatically (yellow switches
+   the caption to black), so the manual switch is not shown. The buttons stay
+   in the markup and the app keeps their state in sync. */
+#textColorControl {
+  display: none;
+}
+
+/* Account reads as a settings row: label and control on one line. */
+.controls-panel > .control-group:nth-child(1) {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.controls-panel > .control-group:nth-child(1) > label {
+  white-space: nowrap;
+}
+
 .control-group label {
+  min-height: 18px;
   color: var(--muted);
+  font-family: var(--font-label);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .caption-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 30px;
 }
 
 .caption-randomize-button {
   padding: 3px 0;
   border: 0;
   background: transparent;
-  color: #252525;
-  font-size: 13px;
-  font-weight: 800;
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
 .caption-randomize-button:hover {
-  color: #174ea6;
+  color: #f0b65c;
 }
 
 .label-icon-button,
@@ -230,9 +310,9 @@ button {
   width: 32px;
   height: 32px;
   place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
   color: var(--text);
   font-size: 19px;
   line-height: 1;
@@ -243,27 +323,35 @@ button {
 .row-delete-button img,
 .row-restore-button img,
 .inline-caption-actions img {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 
+/* ---------------------------------------------------------------------
+   Inputs. One control height across the generator page.
+   --------------------------------------------------------------------- */
 select,
 textarea,
 .image-select-button {
   width: 100%;
-  min-height: 46px;
-  border: 1px solid var(--border);
+  min-height: var(--control-height);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  background: var(--surface-strong);
+  background-color: var(--surface-strong);
   color: var(--text);
+}
+
+.controls-panel select,
+.controls-panel .image-select-button {
+  height: var(--control-height);
 }
 
 select {
   appearance: none;
-  padding: 0 42px 0 12px;
+  padding: 0 38px 0 12px;
   background-image: url("assets/icons/down.svg");
   background-repeat: no-repeat;
-  background-position: right 14px center;
+  background-position: right 13px center;
   background-size: 14px 14px;
 }
 
@@ -273,10 +361,112 @@ textarea {
   line-height: 1.45;
 }
 
+select:focus,
+textarea:focus,
+.hashtag-add-row input:focus,
+.search-field input:focus,
+.inline-caption-editor:focus,
+.image-select-button:focus-visible,
+.icon-button:focus-visible,
+.toolbar-button:focus-visible,
+.label-icon-button:focus-visible,
+.download-button:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(224, 163, 65, 0.22);
+}
+
+/* ---------------------------------------------------------------------
+   Dropdowns. appearance: base-select hands the browser's popup over to
+   CSS so both lists use the product's own surface. Browsers without it
+   keep the native list and the closed control is unchanged either way.
+   Chrome and Edge 134+ today; Firefox and Safari are implementing it.
+   --------------------------------------------------------------------- */
+@supports (appearance: base-select) {
+  select,
+  select::picker(select) {
+    appearance: base-select;
+  }
+
+  select {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    background-image: none;
+    font-size: 15px;
+    text-align: left;
+  }
+
+  select selectedcontent {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  select::picker-icon {
+    content: "";
+    flex: 0 0 auto;
+    margin-left: auto;
+    width: 14px;
+    height: 14px;
+    background: url("assets/icons/down.svg") center / 14px 14px no-repeat;
+    transition: transform 160ms ease;
+  }
+
+  select:open::picker-icon {
+    transform: rotate(180deg);
+  }
+
+  select::picker(select) {
+    margin-top: 6px;
+    padding: 6px;
+    max-height: 320px;
+    overflow: auto;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--surface);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
+  }
+
+  select option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+  }
+
+  select option:hover,
+  select option:focus {
+    border-color: var(--border-strong);
+    background: var(--accent-soft);
+    outline: none;
+  }
+
+  select option:checked {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  select option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--accent);
+  }
+}
+
 .background-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .background-option {
@@ -285,14 +475,14 @@ textarea {
   height: 34px;
   padding: 0;
   overflow: hidden;
-  border: 2px solid transparent;
+  border: 2px solid var(--border-strong);
   border-radius: 999px;
-  background: #e5e7eb;
+  background: var(--surface-strong);
 }
 
 .background-option.active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(224, 163, 65, 0.3);
 }
 
 .background-option img {
@@ -317,21 +507,26 @@ textarea {
 .image-select-button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 7px 18px 7px 12px;
+  gap: 10px;
+  padding: 0 12px 0 6px;
   text-align: left;
 }
 
-.image-select-button img,
+.image-select-button img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
 .image-option img {
-  width: 42px;
-  height: 42px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
 }
 
 .image-select-button .picker-chevron {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   margin-left: auto;
 }
 
@@ -344,42 +539,47 @@ textarea {
   display: none;
   max-height: 320px;
   overflow: auto;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background-color: var(--surface);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
 }
 
 .image-options.open {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .image-option {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 54px;
-  padding: 6px 8px;
+  min-height: 44px;
+  padding: 4px 8px;
   border: 1px solid transparent;
   border-radius: var(--radius);
-  background: transparent;
+  background-color: transparent;
+  color: var(--text);
   text-align: left;
 }
 
 .image-option.active,
 .image-option:hover {
-  border-color: var(--border);
-  background: var(--accent-soft);
+  border-color: var(--border-strong);
+  background-color: var(--accent-soft);
 }
 
+/* ---------------------------------------------------------------------
+   Caption formatting band: Alignment, Position, Font size.
+   Stays on one line at every width; the controls tighten rather than wrap.
+   --------------------------------------------------------------------- */
 .control-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
   align-items: end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .character-pose-row {
@@ -394,26 +594,31 @@ textarea {
 
 .font-size-control {
   display: grid;
-  grid-template-columns: 30px 1fr 30px;
-  min-height: 44px;
-  height: 44px;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  height: var(--control-height);
+  min-height: var(--control-height);
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
 }
 
 .font-size-control button {
+  display: grid;
+  place-items: center;
   border: 0;
-  background: var(--surface-strong);
+  background-color: var(--surface);
   color: var(--text);
-  font-size: 22px;
   cursor: pointer;
 }
 
+.font-size-control button img {
+  width: 16px;
+  height: 16px;
+}
+
 .font-size-control button:hover:not(:disabled) {
-  background: var(--accent-soft);
-  color: #174ea6;
+  background-color: var(--accent-soft);
 }
 
 .font-size-control button:disabled {
@@ -424,16 +629,19 @@ textarea {
 .font-size-control output {
   display: grid;
   place-items: center;
-  border-inline: 1px solid var(--border);
-  color: var(--text);
+  border-inline: 1px solid var(--border-strong);
+  color: var(--accent);
+  font-family: var(--font-label);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
 }
 
 .segmented,
 .swatches {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -449,20 +657,12 @@ textarea {
 
 .icon-button,
 .swatch {
-  min-height: 44px;
-  border: 1px solid var(--border);
+  height: var(--control-height);
+  min-height: var(--control-height);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  background: var(--surface-strong);
+  background-color: var(--surface-strong);
   color: var(--text);
-}
-
-.icon-button,
-.label-icon-button,
-.toolbar-button,
-.row-delete-button,
-.row-restore-button,
-.inline-caption-actions button {
-  border-color: #252525;
 }
 
 .icon-button:hover,
@@ -470,9 +670,11 @@ textarea {
 .toolbar-button:hover,
 .row-delete-button:hover,
 .row-restore-button:hover,
+.group-edit-button:hover,
+.caption-export-button:hover,
 .inline-caption-actions button:hover {
-  border-color: #174ea6;
-  background: var(--accent-soft);
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
 }
 
 .icon-button {
@@ -484,12 +686,12 @@ textarea {
 .icon-button.active,
 .swatch.active {
   border-color: var(--accent);
-  background: var(--accent-soft);
+  background-color: rgba(224, 163, 65, 0.2);
 }
 
 .icon-button img {
-  width: 23px;
-  height: 23px;
+  width: 20px;
+  height: 20px;
 }
 
 .swatch {
@@ -497,14 +699,13 @@ textarea {
   align-items: center;
   justify-content: center;
   width: 44px;
-  height: 44px;
   padding: 0;
 }
 
 .swatch span {
   width: 18px;
   height: 18px;
-  border: 1px solid rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(240, 227, 204, 0.3);
   border-radius: 999px;
 }
 
@@ -514,7 +715,7 @@ textarea {
   gap: 10px;
   width: max-content;
   color: var(--text);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .toggle-control input {
@@ -527,10 +728,10 @@ textarea {
   position: relative;
   width: 48px;
   height: 28px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: #cbd5e1;
-  transition: background 160ms ease;
+  background-color: var(--border);
+  transition: background-color 160ms ease;
 }
 
 .toggle-track::after {
@@ -541,34 +742,38 @@ textarea {
   width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.24);
+  background: var(--muted);
   transition: transform 160ms ease;
 }
 
 .toggle-control input:checked + .toggle-track {
-  background: var(--accent);
+  background-color: rgba(224, 163, 65, 0.4);
 }
 
 .toggle-control input:checked + .toggle-track::after {
+  background: var(--accent);
   transform: translateX(20px);
 }
 
 .download-button {
   display: grid;
   place-items: center;
-  min-height: 48px;
-  border: 0;
+  min-height: 46px;
+  border: 1px solid var(--accent);
   border-radius: var(--radius);
-  background: #111827;
-  color: #ffffff;
-  font-weight: 850;
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-label);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
 }
 
 .download-button:hover {
-  background: #263244;
+  background-color: #f0b65c;
 }
 
 .download-button.is-disabled {
@@ -588,8 +793,10 @@ textarea {
 
 .coming-soon h2 {
   margin: 0;
+  font-family: var(--font-label);
   font-size: clamp(34px, 6vw, 72px);
-  letter-spacing: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .caption-center {
@@ -616,8 +823,8 @@ textarea {
 .character-control-section {
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border-radius: 4px;
+  background-color: var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -625,12 +832,16 @@ textarea {
   min-height: 54px;
   padding: 16px;
   cursor: pointer;
-  font-weight: 700;
+  font-family: var(--font-label);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .character-control-items {
   display: grid;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #332a22;
 }
 
 .availability-toggle {
@@ -639,7 +850,7 @@ textarea {
   align-items: center;
   min-height: 56px;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #332a22;
   cursor: pointer;
 }
 
@@ -652,45 +863,30 @@ textarea {
   opacity: 0;
 }
 
-.toggle-track {
-  position: relative;
+.availability-toggle .toggle-track {
   width: 46px;
   height: 26px;
-  border-radius: 999px;
-  background: #98a2b3;
-  transition: background 160ms ease;
-}
-
-.toggle-track::after {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fff;
-  content: "";
-  transition: transform 160ms ease;
 }
 
 .availability-toggle input:checked + .toggle-track {
-  background: #174ea6;
+  background-color: rgba(224, 163, 65, 0.4);
 }
 
 .availability-toggle input:checked + .toggle-track::after {
+  background: var(--accent);
   transform: translateX(20px);
 }
 
 .availability-toggle input:focus-visible + .toggle-track {
-  outline: 3px solid rgba(23, 78, 166, 0.3);
+  outline: 3px solid rgba(224, 163, 65, 0.3);
   outline-offset: 3px;
 }
 
 .hashtag-account {
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border-radius: 4px;
+  background-color: var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -702,19 +898,23 @@ textarea {
   min-height: 54px;
   padding: 0 18px;
   border: 0;
-  background: var(--surface);
+  background-color: transparent;
   color: var(--text);
-  font-weight: 800;
+  font-family: var(--font-label);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   text-align: left;
 }
 
 .hashtag-account-toggle:hover {
-  background: var(--accent-soft);
+  background-color: var(--accent-soft);
 }
 
 .hashtag-account-toggle img {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   margin-left: 16px;
 }
 
@@ -722,7 +922,7 @@ textarea {
   display: none;
   gap: 16px;
   padding: 18px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #332a22;
 }
 
 .hashtag-account.open .hashtag-account-content {
@@ -733,7 +933,7 @@ textarea {
   display: grid;
   gap: 9px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #332a22;
 }
 
 .hashtag-group:last-child {
@@ -749,26 +949,32 @@ textarea {
 
 .hashtag-group-heading h3 {
   margin: 0;
-  color: var(--text);
-  font-size: 14px;
   min-width: 0;
   overflow-wrap: anywhere;
+  color: var(--text);
+  font-family: var(--font-label);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
+/* The edit control's glyph is written by app.js as a text character, so the
+   icon is applied here. Swapping that string for an <img> in app.js would
+   let this rule go away. */
 .group-edit-button {
   flex: 0 0 auto;
   width: 30px;
   height: 30px;
-  border: 1px solid #252525;
-  border-radius: 6px;
-  background: var(--surface);
-  color: #252525;
-  font-size: 17px;
-}
-
-.group-edit-button:hover {
-  border-color: #174ea6;
-  background: var(--accent-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
+  background-image: url("assets/icons/Edit.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 17px 17px;
+  color: transparent;
+  font-size: 0;
 }
 
 .hashtag-chips {
@@ -783,22 +989,22 @@ textarea {
   align-items: center;
   gap: 5px;
   padding: 5px 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 2px;
-  background: var(--surface-strong);
-  color: var(--text);
+  background-color: var(--surface-strong);
+  color: #d8c6a8;
   font-size: 13px;
 }
 
 .hashtag-chip button {
   display: none;
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
   padding: 0;
   border: 0;
-  border-radius: 999px;
-  background: #252525;
-  color: #ffffff;
+  border-radius: 2px;
+  background-color: var(--accent);
+  color: var(--accent-ink);
   line-height: 1;
 }
 
@@ -809,8 +1015,8 @@ textarea {
 
 .hashtag-chip button img {
   display: block;
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
 .hashtag-add-row {
@@ -821,26 +1027,33 @@ textarea {
 .hashtag-add-row input {
   min-width: 0;
   flex: 1;
-  min-height: 52px;
+  min-height: 46px;
   padding: 0 15px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
+  color: var(--text);
 }
 
 .hashtag-add-row select {
   width: auto;
   flex: 0 0 180px;
-  min-height: 52px;
+  min-height: 46px;
+  height: 46px;
 }
 
 .hashtag-save-button {
-  min-height: 52px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 6px;
-  background: #111827;
-  color: #ffffff;
-  font-weight: 800;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-label);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .caption-form {
@@ -855,15 +1068,20 @@ textarea {
 
 .caption-table-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .caption-table-header h2 {
   margin: 0;
-  font-size: 16px;
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .caption-list-subtitle {
@@ -877,15 +1095,15 @@ textarea {
 }
 
 .caption-status-word {
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .caption-status-word.used {
-  color: #b42318;
+  color: var(--danger);
 }
 
 .caption-status-word.unused {
-  color: #15803d;
+  color: var(--positive);
 }
 
 .caption-toolbar,
@@ -898,18 +1116,16 @@ textarea {
 .caption-export-button {
   min-height: 32px;
   padding: 0 10px;
-  border: 1px solid #252525;
-  border-radius: 6px;
-  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
   color: var(--text);
-  font-size: 12px;
-  font-weight: 750;
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   cursor: pointer;
-}
-
-.caption-export-button:hover {
-  border-color: #174ea6;
-  background: var(--accent-soft);
 }
 
 .toolbar-menu,
@@ -925,10 +1141,10 @@ textarea {
   display: none;
   min-width: 122px;
   padding: 5px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background-color: var(--surface);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
 }
 
 .toolbar-popover.open {
@@ -940,14 +1156,14 @@ textarea {
   min-height: 34px;
   padding: 0 9px;
   border: 0;
-  border-radius: 5px;
-  background: transparent;
+  border-radius: var(--radius);
+  background-color: transparent;
   color: var(--text);
   text-align: left;
 }
 
 .toolbar-popover button:hover {
-  background: var(--accent-soft);
+  background-color: var(--accent-soft);
 }
 
 .search-field {
@@ -960,8 +1176,10 @@ textarea {
   width: min(240px, 52vw);
   min-height: 32px;
   padding: 0 9px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
+  color: var(--text);
 }
 
 .caption-toolbar.search-active > :not(.caption-search),
@@ -988,17 +1206,21 @@ textarea {
 .management-done-button {
   min-height: 32px;
   padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
   color: var(--text);
-  font-weight: 750;
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .caption-table th,
 .caption-table td {
   padding: 13px 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #332a22;
   text-align: left;
   vertical-align: top;
 }
@@ -1036,7 +1258,7 @@ textarea {
 
 .row-delete-button {
   flex: 0 0 auto;
-  color: #b42318;
+  color: var(--danger);
 }
 
 .row-restore-button {
@@ -1048,7 +1270,7 @@ textarea {
   border-bottom: 0;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1058,7 +1280,9 @@ textarea {
   min-height: 74px;
   padding: 8px;
   border: 1px solid var(--accent);
-  border-radius: 6px;
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
+  color: var(--text);
   resize: vertical;
 }
 
@@ -1074,17 +1298,17 @@ textarea {
   height: 32px;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
 }
 
 .delete-button {
   width: 42px;
   height: 42px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 90, 80, 0.3);
   border-radius: var(--radius);
-  background: #fff5f5;
+  background-color: rgba(255, 90, 80, 0.12);
 }
 
 .delete-button img {
@@ -1109,17 +1333,17 @@ textarea {
 .caption-pagination button {
   min-height: 32px;
   padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface-strong);
   color: var(--text);
   font: inherit;
   cursor: pointer;
 }
 
 .caption-pagination button:hover:not(:disabled) {
-  border-color: #174ea6;
-  background: var(--accent-soft);
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
 }
 
 .caption-pagination button:disabled {
@@ -1139,7 +1363,7 @@ textarea {
 }
 
 .storage-status.is-error {
-  color: #b42318;
+  color: var(--danger);
 }
 
 @media (max-width: 980px) {
@@ -1159,19 +1383,30 @@ textarea {
     margin-top: 16px;
   }
 
-  .control-row {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  #alignmentButtons .icon-button {
-    width: calc((100% - 8px) / 3);
-  }
-
+  .preview-panel,
   .controls-panel,
   .caption-form,
-  .caption-table-wrap,
-  .preview-panel {
-    padding: 12px;
+  .caption-table-wrap {
+    padding: 14px;
+  }
+
+  /* the formatting band tightens rather than wrapping */
+  .control-row {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .font-size-control {
+    grid-template-columns: 26px minmax(0, 1fr) 26px;
+  }
+
+  .font-size-control output {
+    font-size: 11.5px;
+  }
+
+  .icon-button img {
+    width: 18px;
+    height: 18px;
   }
 
   .caption-table-header {
@@ -1217,5 +1452,29 @@ textarea {
 
   .hashtag-save-button {
     flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .control-row {
+    gap: 6px;
+  }
+
+  .font-size-control {
+    grid-template-columns: 24px minmax(0, 1fr) 24px;
+  }
+
+  .font-size-control output {
+    font-size: 11px;
+  }
+
+  .font-size-control button img {
+    width: 15px;
+    height: 15px;
+  }
+
+  .icon-button img {
+    width: 16px;
+    height: 16px;
   }
 }
