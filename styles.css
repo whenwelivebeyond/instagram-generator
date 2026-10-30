@@ -431,6 +431,30 @@ textarea:focus,
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
   }
 
+  /* The chosen saved caption remains one clean line in the control. Its
+     popup, however, is constrained to the screen and lets each option wrap. */
+  #savedCaptionSelect {
+    min-width: 0;
+  }
+
+  #savedCaptionSelect::picker(select) {
+    width: 100%;
+    min-width: 0;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+  }
+
+  #savedCaptionSelect option {
+    min-width: 0;
+    min-height: 38px;
+    height: auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+
   select option {
     display: flex;
     align-items: center;
